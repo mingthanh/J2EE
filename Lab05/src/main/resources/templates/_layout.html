@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quan Ly San Pham</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<nav class="top-nav">
+    <div class="container app-shell d-flex align-items-center justify-content-between py-3">
+        <a class="brand text-decoration-none" th:href="@{/products}">Product Admin</a>
+        <div class="d-flex gap-3">
+            <a class="nav-link px-0" th:href="@{/products}">San pham</a>
+            <a class="nav-link px-0" th:href="@{/categories}">Danh muc</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container app-shell py-4">
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+    <div class="panel" layout:fragment="content"></div>
+</main>
+</body>
+</html>

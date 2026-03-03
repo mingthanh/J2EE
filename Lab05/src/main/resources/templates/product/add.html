@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{_layout}">
+<body>
+<section layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0" th:text="${product.id == null ? 'Them san pham' : 'Cap nhat san pham'}"></h2>
+        <a th:href="@{/products}" class="btn btn-outline-secondary">Quay lai</a>
+    </div>
+
+    <form th:action="@{/products/save}" th:object="${product}" method="post">
+        <input type="hidden" th:field="*{id}">
+
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="name" class="form-label fw-semibold">Ten san pham</label>
+                <input id="name" type="text" th:field="*{name}" class="form-control" placeholder="Nhap ten san pham">
+                <div class="text-danger mt-1 small" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+            </div>
+
+            <div class="col-md-6">
+                <label for="price" class="form-label fw-semibold">Gia</label>
+                <input id="price" type="number" min="1" max="9999999" th:field="*{price}" class="form-control" placeholder="Nhap gia">
+                <div class="text-danger mt-1 small" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></div>
+            </div>
+
+            <div class="col-md-8">
+                <label for="image" class="form-label fw-semibold">Image URL</label>
+                <input id="image" type="text" th:field="*{image}" class="form-control" placeholder="https://...">
+                <div class="text-danger mt-1 small" th:if="${#fields.hasErrors('image')}" th:errors="*{image}"></div>
+            </div>
+
+            <div class="col-md-4">
+                <label for="categoryId" class="form-label fw-semibold">Danh muc</label>
+                <select id="categoryId" name="categoryId" class="form-select">
+                    <option th:value="${null}">Khong co danh muc</option>
+                    <option th:each="c : ${categories}"
+                            th:value="${c.id}"
+                            th:text="${c.name}"
+                            th:selected="${product.category != null and product.category.id == c.id}">
+                    </option>
+                </select>
+                <div class="text-danger mt-1 small" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">Luu san pham</button>
+        </div>
+    </form>
+</section>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{_layout}">
+<body>
+<section layout:fragment="content">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">San pham</h2>
+        <a th:href="@{/products/add}" class="btn btn-primary">Them san pham</a>
+    </div>
+
+    <form th:action="@{/products}" method="get" class="row g-2 mb-3">
+        <div class="col-sm-8 col-md-6">
+            <input type="text" name="keyword" class="form-control" th:value="${keyword}" placeholder="Tim theo ten san pham...">
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-outline-secondary">Tim kiem</button>
+        </div>
+        <div class="col-auto" th:if="${keyword != null and !#strings.isEmpty(keyword)}">
+            <a th:href="@{/products}" class="btn btn-light border">Bo loc</a>
+        </div>
+    </form>
+
+    <div th:if="${#lists.isEmpty(products)}" class="empty-state">
+        Khong co san pham phu hop.
+    </div>
+
+    <div th:unless="${#lists.isEmpty(products)}" class="table-wrap">
+        <table class="table table-hover align-middle">
+            <thead>
+            <tr>
+                <th style="width: 70px;">ID</th>
+                <th style="width: 100px;">Hinh</th>
+                <th>Ten san pham</th>
+                <th style="width: 160px;">Gia</th>
+                <th style="width: 180px;">Danh muc</th>
+                <th style="width: 180px;">Hanh dong</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="product : ${products}">
+                <td th:text="${product.id}"></td>
+                <td>
+                    <img th:if="${product.image != null and !#strings.isEmpty(product.image)}"
+                         th:src="${product.image}"
+                         alt="Product image"
+                         class="img-thumb">
+                    <div th:unless="${product.image != null and !#strings.isEmpty(product.image)}"
+                         class="img-thumb d-flex align-items-center justify-content-center small text-secondary">
+                        No image
+                    </div>
+                </td>
+                <td th:text="${product.name}"></td>
+                <td class="fw-semibold text-success" th:text="${product.price != null ? product.price + ' VND' : 'N/A'}"></td>
+                <td>
+                    <span th:text="${product.category != null ? product.category.name : 'Khong co'}"></span>
+                </td>
+                <td class="d-flex gap-2">
+                    <a th:href="@{'/products/edit/' + ${product.id}}" class="btn btn-sm btn-outline-secondary">Sua</a>
+                    <a th:href="@{'/products/delete/' + ${product.id}}"
+                       class="btn btn-sm btn-outline-danger"
+                       onclick="return confirm('Xoa san pham nay?')">Xoa</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+</body>
+</html>

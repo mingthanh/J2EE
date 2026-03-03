@@ -1,0 +1,120 @@
+:root {
+    --bg: #f3f6f8;
+    --surface: #ffffff;
+    --surface-soft: #eef3f7;
+    --text: #1a2a33;
+    --muted: #5a707d;
+    --primary: #0f766e;
+    --primary-strong: #115e59;
+    --danger: #b42318;
+    --border: #d5e0e6;
+    --shadow: 0 12px 28px rgba(16, 44, 64, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+    background: radial-gradient(circle at top left, #dceff0 0, transparent 38%),
+                radial-gradient(circle at right 16rem, #dce9ff 0, transparent 26%),
+                var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+.app-shell {
+    max-width: 1080px;
+}
+
+.top-nav {
+    border-bottom: 1px solid #d8e3ea;
+    background: linear-gradient(90deg, #e6f8f6 0, #edf4ff 100%);
+}
+
+.brand {
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: #124a57;
+}
+
+.nav-link {
+    color: #1d4955;
+    font-weight: 500;
+}
+
+.nav-link.active {
+    color: var(--primary-strong);
+    border-bottom: 2px solid var(--primary);
+}
+
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.2rem;
+    box-shadow: var(--shadow);
+}
+
+.panel h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+}
+
+.table-wrap {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead {
+    background: var(--surface-soft);
+}
+
+.btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background: var(--primary-strong);
+    border-color: var(--primary-strong);
+}
+
+.btn-outline-danger {
+    border-color: #d8a2a0;
+    color: var(--danger);
+}
+
+.img-thumb {
+    width: 82px;
+    height: 62px;
+    border-radius: 10px;
+    border: 1px solid #d7e3ea;
+    object-fit: cover;
+    background: #f0f4f7;
+}
+
+.empty-state {
+    border: 1px dashed #b4c6d1;
+    border-radius: 12px;
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--muted);
+}
+
+@media (max-width: 768px) {
+    .panel {
+        padding: 1rem;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+}
