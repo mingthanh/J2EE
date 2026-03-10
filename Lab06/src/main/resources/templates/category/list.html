@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{_layout}">
+<body>
+<section layout:fragment="content">
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Danh muc</h2>
+        <a th:href="@{/categories/add}" class="btn btn-primary" sec:authorize="hasRole('ADMIN')">Them danh muc</a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(categories)}" class="empty-state">
+        Chua co danh muc nao. Hay tao danh muc dau tien.
+    </div>
+
+    <div th:unless="${#lists.isEmpty(categories)}" class="table-wrap">
+        <table class="table table-hover align-middle">
+            <thead>
+            <tr>
+                <th style="width: 90px;">ID</th>
+                <th>Ten danh muc</th>
+                <th style="width: 180px;" sec:authorize="hasRole('ADMIN')">Hanh dong</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="c : ${categories}">
+                <td th:text="${c.id}"></td>
+                <td th:text="${c.name}"></td>
+                <td class="d-flex gap-2" sec:authorize="hasRole('ADMIN')">
+                    <a th:href="@{'/categories/edit/' + ${c.id}}" class="btn btn-sm btn-outline-secondary">Sua</a>
+                    <a th:href="@{'/categories/delete/' + ${c.id}}"
+                       class="btn btn-sm btn-outline-danger"
+                       onclick="return confirm('Xoa danh muc nay?')">Xoa</a>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+</body>
+</html>

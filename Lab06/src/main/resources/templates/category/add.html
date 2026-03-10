@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{_layout}">
+<body>
+<section layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0" th:text="${category.id == null ? 'Them danh muc' : 'Cap nhat danh muc'}"></h2>
+        <a th:href="@{/categories}" class="btn btn-outline-secondary">Quay lai</a>
+    </div>
+
+    <form th:action="@{/categories/save}" th:object="${category}" method="post" style="max-width: 560px;">
+        <input type="hidden" th:field="*{id}">
+
+        <div class="mb-3">
+            <label for="name" class="form-label fw-semibold">Ten danh muc</label>
+            <input id="name" type="text" th:field="*{name}" class="form-control" placeholder="Vi du: Dien tu, Gia dung...">
+            <div class="text-danger mt-1 small" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Luu danh muc</button>
+    </form>
+</section>
+</body>
+</html>
