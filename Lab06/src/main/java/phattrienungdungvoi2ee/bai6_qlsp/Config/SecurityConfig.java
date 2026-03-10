@@ -33,7 +33,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
 
         http
-                .userDetailsService(accountService)   // ⭐ THÊM DÒNG NÀY
+                .userDetailsService(accountService)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                         .requestMatchers("/products").hasAnyRole("USER","ADMIN")
