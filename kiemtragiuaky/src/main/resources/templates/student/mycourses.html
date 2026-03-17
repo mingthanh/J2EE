@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>My Courses</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div th:replace="~{layout :: layout(~{::section})}">
+    <section>
+        <div class="hero">
+            <h2>My Courses</h2>
+            <p>All courses you have enrolled in.</p>
+        </div>
+        <div th:if="${#lists.isEmpty(enrollments)}">You have not enrolled in any course.</div>
+        <div class="card-grid">
+            <div class="card" th:each="enroll : ${enrollments}">
+                <div><strong th:text="${enroll.course.name}">Course Name</strong></div>
+                <div class="muted">Credits: <span th:text="${enroll.course.credits}">0</span></div>
+                <div class="muted">Lecturer: <span th:text="${enroll.course.lecturer}">Lecturer</span></div>
+                <div class="muted">Enrolled at: <span th:text="${#temporals.format(enroll.enrollDate, 'dd/MM/yyyy HH:mm')}">Date</span></div>
+            </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

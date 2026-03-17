@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div th:replace="~{layout :: layout(~{::section})}">
+    <section>
+        <div class="auth-shell">
+            <div class="auth-side">
+                <h2>Join the Platform</h2>
+                <p>Create a student account to enroll in courses and track progress.</p>
+                <p class="muted">It only takes a minute.</p>
+            </div>
+            <div class="auth-card">
+                <h2>Student Registration</h2>
+                <div class="alert" th:if="${error}" th:text="${error}"></div>
+                <form th:action="@{/register}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="field">
+                        <label>Username</label>
+                        <input type="text" name="username" required>
+                    </div>
+                    <div class="field">
+                        <label>Password</label>
+                        <input type="password" name="password" required>
+                    </div>
+                    <div class="field">
+                        <label>Email</label>
+                        <input type="email" name="email" required>
+                    </div>
+                    <button type="submit" class="btn-secondary">Create Account</button>
+                </form>
+                <div style="margin-top: 12px;">
+                    <a class="btn-link" th:href="@{/login}">Back to login</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Course</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div th:replace="~{layout :: layout(~{::section})}">
+    <section>
+        <div class="form-card">
+            <h2>Create Course</h2>
+            <form th:action="@{/admin/courses/create}" method="post" th:object="${course}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="field">
+                    <label>Name</label>
+                    <input type="text" th:field="*{name}" required>
+                </div>
+                <div class="field">
+                    <label>Image URL</label>
+                    <input type="text" th:field="*{image}">
+                </div>
+                <div class="field">
+                    <label>Credits</label>
+                    <input type="text" th:field="*{credits}">
+                </div>
+                <div class="field">
+                    <label>Lecturer</label>
+                    <input type="text" th:field="*{lecturer}">
+                </div>
+                <div class="field">
+                    <label>Category</label>
+                    <select name="categoryId">
+                        <option value="">-- None --</option>
+                        <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.name}"></option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-secondary">Save</button>
+            </form>
+        </div>
+    </section>
+</div>
+</body>
+</html>

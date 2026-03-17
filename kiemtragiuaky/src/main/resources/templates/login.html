@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div th:replace="~{layout :: layout(~{::section})}">
+    <section>
+        <div class="auth-shell">
+            <div class="auth-side">
+                <h2>Welcome Back</h2>
+                <p>Sign in to manage your enrollments, courses, and profile.</p>
+                <p class="muted">Secure access for students and admins.</p>
+            </div>
+            <div class="auth-card">
+                <h2>Login</h2>
+                <div class="alert" th:if="${param.error}">Invalid username or password.</div>
+                <div class="alert" th:if="${param.logout}">You have been logged out.</div>
+                <div class="alert" th:if="${param.registered}">Register success. Please login.</div>
+                <form th:action="@{/login}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="field">
+                        <label>Username</label>
+                        <input type="text" name="username" required>
+                    </div>
+                    <div class="field">
+                        <label>Password</label>
+                        <input type="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn">Login</button>
+                </form>
+                <div style="margin-top: 12px;">
+                    <a class="btn-outline" th:href="@{/oauth2/authorization/google}">Login with Google</a>
+                </div>
+                <div style="margin-top: 12px;">
+                    <a class="btn-link" th:href="@{/register}">Create student account</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<div th:replace="~{layout :: layout(~{::section})}">
+    <section>
+        <div class="hero">
+            <h2>Discover Your Next Course</h2>
+            <p>Browse courses, enroll instantly, and manage your learning in one place.</p>
+        </div>
+        <h2 style="margin-top: 20px;">All Courses</h2>
+        <div th:if="${courses.content.size() == 0}">No courses found.</div>
+        <div class="card-grid">
+            <div class="card" th:each="course : ${courses.content}">
+                <img th:if="${course.image}" th:src="${course.image}" alt="Course image">
+                <div th:unless="${course.image}" class="badge">No image</div>
+                <div><strong th:text="${course.name}">Course Name</strong></div>
+                <div class="muted">Credits: <span th:text="${course.credits}">0</span></div>
+                <div class="muted">Lecturer: <span th:text="${course.lecturer}">Lecturer</span></div>
+                <div th:if="${course.category}">Category: <span th:text="${course.category.name}">Category</span></div>
+                <form sec:authorize="hasRole('STUDENT')" th:action="@{/enroll/{id}(id=${course.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn-secondary">Enroll</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="pagination" th:if="${courses.totalPages > 1}">
+            <a th:if="${courses.hasPrevious()}"
+               th:href="@{/home(page=${courses.number - 1}, q=${q})}" class="btn-outline">Previous</a>
+            <span>Page <span th:text="${courses.number + 1}">1</span> / <span th:text="${courses.totalPages}">1</span></span>
+            <a th:if="${courses.hasNext()}"
+               th:href="@{/home(page=${courses.number + 1}, q=${q})}" class="btn-outline">Next</a>
+        </div>
+    </section>
+</div>
+</body>
+</html>
