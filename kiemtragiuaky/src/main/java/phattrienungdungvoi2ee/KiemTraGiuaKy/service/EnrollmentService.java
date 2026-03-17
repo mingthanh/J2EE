@@ -34,4 +34,9 @@ public class EnrollmentService {
                     return enrollmentRepository.save(enrollment);
                 });
     }
+
+    @Transactional
+    public void unenroll(Student student, Course course) {
+        enrollmentRepository.deleteByStudentAndCourse(student, course);
+    }
 }

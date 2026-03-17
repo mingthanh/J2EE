@@ -36,6 +36,14 @@ public class EnrollmentController {
         return "redirect:/my-courses";
     }
 
+    @PostMapping("/enroll/cancel/{courseId}")
+    public String cancelEnroll(@PathVariable Long courseId, Principal principal) {
+        Student student = studentService.findByUsername(principal.getName()).orElseThrow();
+        Course course = courseService.findById(courseId).orElseThrow();
+        enrollmentService.unenroll(student, course);
+        return "redirect:/my-courses";
+    }
+
     @GetMapping("/my-courses")
     public String myCourses(Principal principal, Model model) {
         Student student = studentService.findByUsername(principal.getName()).orElseThrow();

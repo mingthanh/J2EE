@@ -19,6 +19,10 @@
                 <div class="muted">Credits: <span th:text="${enroll.course.credits}">0</span></div>
                 <div class="muted">Lecturer: <span th:text="${enroll.course.lecturer}">Lecturer</span></div>
                 <div class="muted">Enrolled at: <span th:text="${#temporals.format(enroll.enrollDate, 'dd/MM/yyyy HH:mm')}">Date</span></div>
+                <form th:action="@{/enroll/cancel/{id}(id=${enroll.course.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <button type="submit" class="btn-outline">Leave Course</button>
+                </form>
             </div>
         </div>
     </section>
