@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{_layout}">
+<body>
+<section layout:fragment="content">
+    <div class="page-head">
+        <div>
+            <p class="eyebrow">Orders</p>
+            <h2 class="mb-1">Don hang cua user</h2>
+            <p class="page-subtitle mb-0">Theo doi lich su dat hang, san pham da mua va tong gia tri tung don.</p>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(orders)}" class="empty-state">
+        Chua co don hang nao.
+    </div>
+
+    <div th:unless="${#lists.isEmpty(orders)}" class="table-wrap">
+        <table class="table app-table align-middle">
+            <thead>
+            <tr>
+                <th style="width: 90px;">Ma don</th>
+                <th style="width: 180px;">User</th>
+                <th>Chi tiet</th>
+                <th style="width: 170px;">Tong tien</th>
+                <th style="width: 220px;">Ngay tao</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="order : ${orders}">
+                <td th:text="${order.id}"></td>
+                <td th:text="${order.account.login_name}"></td>
+                <td>
+                    <div th:each="detail : ${order.orderDetails}" class="small mb-1">
+                        <span th:text="${detail.product.name}"></span>
+                        <span th:text="${' x ' + detail.quantity + ' = ' + detail.lineTotal + ' VND'}"></span>
+                    </div>
+                </td>
+                <td class="fw-semibold text-success" th:text="${order.totalAmount + ' VND'}"></td>
+                <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm:ss')}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+</body>
+</html>

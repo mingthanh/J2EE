@@ -1,6 +1,8 @@
 package phattrienungdungvoi2ee.DoAnMonHoc.controller;
 
+import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,13 +30,18 @@ public class UserController {
 		return userService.getAll();
 	}
 
+	@GetMapping("/me")
+	public User getCurrentUser(Authentication authentication) {
+		return userService.getByUsername(authentication.getName());
+	}
+
 	@GetMapping("/{id}")
 	public User getById(@PathVariable String id) {
 		return userService.getById(id);
 	}
 
 	@PostMapping
-	public User create(@RequestBody UserDTO dto) {
+	public User create(@Valid @RequestBody UserDTO dto) {
 		return userService.create(dto);
 	}
 

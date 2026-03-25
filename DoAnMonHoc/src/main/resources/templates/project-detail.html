@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiet Du An - Jolliebee</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/dashboard" class="navbar-brand">Jolliebee</a>
+            <ul class="navbar-menu">
+                <li><a href="/dashboard" class="navbar-link">Dashboard</a></li>
+                <li><a href="/projects" class="navbar-link active">Du an</a></li>
+                <li><a href="/issues" class="navbar-link">Issues</a></li>
+                <li><a href="/profile" class="navbar-link">Ho so</a></li>
+            </ul>
+            <div class="navbar-user">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <button class="btn btn-outline btn-small" onclick="AuthService.logout()">Dang xuat</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container page-shell">
+            <a href="/projects" class="btn btn-outline btn-small">Quay lai danh sach</a>
+
+            <section class="page-panel">
+                <div class="section-header">
+                    <div>
+                        <div class="hero-badge">Chi tiet du an</div>
+                        <h1 class="section-title" id="projectName">Ten du an</h1>
+                        <p class="section-subtitle" id="projectDescription">Mo ta du an</p>
+                    </div>
+                </div>
+                <div class="info-grid" id="projectInfo"></div>
+            </section>
+
+            <section class="page-panel">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title">Issues cua du an</h2>
+                        <p class="section-subtitle">Danh sach issue lien quan den du an hien tai.</p>
+                    </div>
+                    <a href="/issues" class="btn btn-primary btn-small">Tao issue</a>
+                </div>
+                <div id="issuesList"></div>
+            </section>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const user = AuthService.getCurrentUser();
+        if (user) {
+            document.getElementById('userAvatar').textContent = (user.displayName || user.username).charAt(0).toUpperCase();
+        }
+
+        const projectId = window.location.pathname.split('/')[2];
+
+        async function loadProjectDetail() {
+            try {
+                UIUtils.showLoading();
+                const project = await ProjectService.getById(projectId);
+                UIUtils.hideLoading();
+
+                document.getElementById('projectName').textContent = project.name;
+                document.getElementById('projectDescription').textContent = project.description || 'Khong co mo ta';
+
+                document.getElementById('projectInfo').innerHTML = `
+                    <div class="info-item">
+                        <span class="meta-label">Trang thai</span>
+                        <div class="info-value">
+                            <span class="badge ${project.active ? 'badge-success' : 'badge-warning'}">
+                                ${project.active ? 'Hoat dong' : 'Tam dung'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+
+                const allIssues = await IssueService.getAll();
+                const projectIssues = allIssues.filter(i => i.projectId === projectId);
+
+                const issuesHtml = projectIssues.length > 0
+                    ? `
+                        <div class="table-shell">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Tieu de</th>
+                                        <th>Do uu tien</th>
+                                        <th>Trang thai</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${projectIssues.map(issue => `
+                                        <tr>
+                                            <td>${issue.title}</td>
+                                            <td><span class="badge badge-primary">${issue.priority || 'Medium'}</span></td>
+                                            <td>${issue.status || 'Open'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `
+                    : '<div class="empty-state"><p>Chua co issue trong du an nay.</p></div>';
+
+                document.getElementById('issuesList').innerHTML = issuesHtml;
+            } catch (error) {
+                UIUtils.hideLoading();
+                UIUtils.showError('Loi khi tai chi tiet du an');
+                console.error('Error:', error);
+            }
+        }
+
+        loadProjectDetail();
+    </script>
+</body>
+</html>

@@ -2,12 +2,16 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{_layout}">
 <body>
 <section layout:fragment="content">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0" th:text="${product.id == null ? 'Them san pham' : 'Cap nhat san pham'}"></h2>
+    <div class="page-head">
+        <div>
+            <p class="eyebrow">Editor</p>
+            <h2 class="mb-1" th:text="${product.id == null ? 'Them san pham' : 'Cap nhat san pham'}"></h2>
+            <p class="page-subtitle mb-0">Nhap day du thong tin de san pham hien thi dep va de tim kiem hon.</p>
+        </div>
         <a th:href="@{/products}" class="btn btn-outline-secondary">Quay lai</a>
     </div>
 
-    <form th:action="@{/products/save}" th:object="${product}" method="post">
+    <form th:action="@{/products/save}" th:object="${product}" method="post" class="form-card">
         <input type="hidden" th:field="*{id}">
 
         <div class="row g-3">
@@ -43,7 +47,7 @@
             </div>
         </div>
 
-        <div class="mt-4">
+        <div class="mt-4 d-flex justify-content-end">
             <button type="submit" class="btn btn-primary">Luu san pham</button>
         </div>
     </form>

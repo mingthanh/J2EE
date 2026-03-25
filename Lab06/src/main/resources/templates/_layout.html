@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,12 +12,23 @@
 </head>
 <body>
 <nav class="top-nav">
-    <div class="container app-shell d-flex align-items-center justify-content-between py-3">
-        <a class="brand text-decoration-none" th:href="@{/products}">Product Admin</a>
-        <div class="d-flex align-items-center gap-3">
-            <a class="nav-link px-0" th:href="@{/products}">San pham</a>
-            <a class="nav-link px-0" th:href="@{/categories}">Danh muc</a>
-            <form th:action="@{/logout}" method="post" class="ms-2">
+    <div class="container app-shell nav-shell">
+        <a class="brand text-decoration-none" th:href="@{/products}">
+            <span class="brand-mark">P</span>
+            <span>
+                <strong>Product Admin</strong>
+                <small>Store dashboard</small>
+            </span>
+        </a>
+        <div class="nav-actions">
+            <a class="nav-link" th:href="@{/products}">San pham</a>
+            <a class="nav-link" th:href="@{/categories}">Danh muc</a>
+            <a class="nav-link" th:href="@{/orders}" sec:authorize="hasRole('ADMIN')">Don hang</a>
+            <a class="nav-link cart-link" th:href="@{/cart}" sec:authorize="hasRole('USER')">
+                <span>Gio hang</span>
+                <span class="cart-badge" th:text="${cartItemCount != null ? cartItemCount : 0}">0</span>
+            </a>
+            <form th:action="@{/logout}" method="post" class="logout-form">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <button type="submit" class="btn btn-sm btn-outline-danger">Dang xuat</button>
             </form>
@@ -28,7 +39,7 @@
 <main class="container app-shell py-4">
     <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
-    <div class="panel" layout:fragment="content"></div>
+    <div class="panel app-panel" layout:fragment="content"></div>
 </main>
 </body>
 </html>

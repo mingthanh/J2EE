@@ -2,8 +2,12 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{_layout}">
 <body>
 <section layout:fragment="content">
-    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Danh muc</h2>
+    <div class="page-head">
+        <div>
+            <p class="eyebrow">Categories</p>
+            <h2 class="mb-1">Danh muc san pham</h2>
+            <p class="page-subtitle mb-0">Quan ly nhom san pham de viec loc va sap xep ro rang hon.</p>
+        </div>
         <a th:href="@{/categories/add}" class="btn btn-primary" sec:authorize="hasRole('ADMIN')">Them danh muc</a>
     </div>
 
@@ -12,19 +16,19 @@
     </div>
 
     <div th:unless="${#lists.isEmpty(categories)}" class="table-wrap">
-        <table class="table table-hover align-middle">
+        <table class="table app-table align-middle">
             <thead>
             <tr>
-                <th style="width: 90px;">ID</th>
+                <th style="width: 90px;">STT</th>
                 <th>Ten danh muc</th>
                 <th style="width: 180px;" sec:authorize="hasRole('ADMIN')">Hanh dong</th>
             </tr>
             </thead>
             <tbody>
-            <tr th:each="c : ${categories}">
-                <td th:text="${c.id}"></td>
-                <td th:text="${c.name}"></td>
-                <td class="d-flex gap-2" sec:authorize="hasRole('ADMIN')">
+            <tr th:each="c, stat : ${categories}">
+                <td th:text="${stat.count}"></td>
+                <td class="fw-semibold" th:text="${c.name}"></td>
+                <td class="action-group" sec:authorize="hasRole('ADMIN')">
                     <a th:href="@{'/categories/edit/' + ${c.id}}" class="btn btn-sm btn-outline-secondary">Sua</a>
                     <a th:href="@{'/categories/delete/' + ${c.id}}"
                        class="btn btn-sm btn-outline-danger"

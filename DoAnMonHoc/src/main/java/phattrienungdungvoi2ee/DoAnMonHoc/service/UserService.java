@@ -6,6 +6,7 @@ import phattrienungdungvoi2ee.DoAnMonHoc.entity.User;
 
 public interface UserService {
 	List<User> getAll();
+	User getByUsername(String username);
 	User getById(String id);
 	User create(UserDTO dto);
 	User update(String id, UserDTO dto);

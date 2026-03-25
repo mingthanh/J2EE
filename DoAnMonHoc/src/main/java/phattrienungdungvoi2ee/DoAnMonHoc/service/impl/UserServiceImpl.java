@@ -2,6 +2,7 @@ package phattrienungdungvoi2ee.DoAnMonHoc.service.impl;
 
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import phattrienungdungvoi2ee.DoAnMonHoc.dto.UserDTO;
@@ -13,14 +14,22 @@ import phattrienungdungvoi2ee.DoAnMonHoc.service.UserService;
 public class UserServiceImpl implements UserService {
 
 	private final UserRepository userRepository;
+	private final PasswordEncoder passwordEncoder;
 
-	public UserServiceImpl(UserRepository userRepository) {
+	public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
 		this.userRepository = userRepository;
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	@Override
 	public List<User> getAll() {
 		return userRepository.findAll();
+	}
+
+	@Override
+	public User getByUsername(String username) {
+		return userRepository.findByUsername(username)
+			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 	}
 
 	@Override
@@ -56,11 +65,14 @@ public class UserServiceImpl implements UserService {
 		if (dto.getEmail() != null) {
 			user.setEmail(dto.getEmail());
 		}
-		if (dto.getPassword() != null) {
-			user.setPassword(dto.getPassword());
+		if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+			user.setPassword(passwordEncoder.encode(dto.getPassword()));
 		}
 		if (dto.getDisplayName() != null) {
 			user.setDisplayName(dto.getDisplayName());
+		}
+		if (dto.getAvatarUrl() != null) {
+			user.setAvatarUrl(dto.getAvatarUrl());
 		}
 		if (dto.getRole() != null) {
 			user.setRole(dto.getRole());

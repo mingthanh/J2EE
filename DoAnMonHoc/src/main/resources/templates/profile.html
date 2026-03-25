@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ sơ - Jolliebee</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-title-key="profile_title">
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/dashboard" class="navbar-brand">Jolliebee</a>
+            <ul class="navbar-menu">
+                <li><a href="/dashboard" class="navbar-link" data-i18n="nav_dashboard">Dashboard</a></li>
+                <li><a href="/projects" class="navbar-link" data-i18n="nav_projects">Dự án</a></li>
+                <li><a href="/issues" class="navbar-link" data-i18n="nav_issues">Issues</a></li>
+                <li><a href="/profile" class="navbar-link active" data-i18n="nav_profile">Hồ sơ</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="language-switcher">
+                    <button type="button" class="lang-btn" data-lang-btn="vi">VI</button>
+                    <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+                </div>
+                <div class="navbar-user">
+                    <div class="user-menu">
+                        <button type="button" class="user-menu-trigger" aria-label="User menu">
+                            <div class="user-avatar" id="userAvatar">A</div>
+                        </button>
+                        <div class="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <div class="user-dropdown-name" id="userDropdownName">Tên người dùng</div>
+                                <div class="user-dropdown-meta" id="userDropdownEmail">email@example.com</div>
+                            </div>
+                            <a href="#profileEditor" class="user-dropdown-link" id="dropdownEditProfile">Chỉnh sửa hồ sơ</a>
+                            <a href="#" class="user-dropdown-link" id="dropdownChangeAvatar">Cập nhật ảnh đại diện</a>
+                            <a href="#" class="user-dropdown-link" onclick="AuthService.logout(); return false;" data-i18n="common_logout">Đăng xuất</a>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline btn-small" onclick="AuthService.logout()" data-i18n="common_logout">Đăng xuất</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="profile-stack">
+                <section class="profile-header">
+                    <label for="avatarUpload" class="profile-avatar large" id="profileAvatar">
+                        <span class="avatar-content" id="avatarText">A</span>
+                        <span class="avatar-edit-hint">Đổi ảnh</span>
+                    </label>
+                    <input type="file" id="avatarUpload" accept="image/*" hidden>
+                    <h1 id="profileName">Tên người dùng</h1>
+                    <p id="profileRole">Người dùng</p>
+                    <p class="auth-note">Di chuột vào avatar hoặc bấm vào ảnh để cập nhật ảnh đại diện.</p>
+                </section>
+
+                <section class="page-panel" id="profileEditor">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title" data-i18n="profile_personal">Thông tin cá nhân</h2>
+                            <p class="section-subtitle" data-i18n="profile_personal_copy">Các thông tin chính được sắp xếp thành từng cụm để người dùng dễ xem và dễ cập nhật sau này.</p>
+                        </div>
+                    </div>
+
+                    <form id="profileForm" onsubmit="handleProfileUpdate(event)">
+                        <div class="profile-form-grid">
+                            <div class="form-group">
+                                <label for="profileUsername" data-i18n="profile_username">Tên đăng nhập</label>
+                                <input type="text" id="profileUsername" class="form-control" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="profileEmail" data-i18n="profile_email">Email</label>
+                                <input type="email" id="profileEmail" class="form-control" required>
+                            </div>
+                            <div class="form-group full">
+                                <label for="profileDisplayName" data-i18n="profile_display_name">Tên hiển thị</label>
+                                <input type="text" id="profileDisplayName" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label data-i18n="profile_role">Vai trò</label>
+                                <div class="info-item">
+                                    <div class="info-value" id="role">-</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label data-i18n="profile_status">Trạng thái tài khoản</label>
+                                <div class="info-item">
+                                    <div class="info-value" id="activeStatus">
+                                        <span class="badge badge-success" data-i18n="profile_active">Hoạt động</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-actions mt-3">
+                            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                            <button type="button" class="btn btn-secondary" onclick="resetProfileForm()">Đặt lại</button>
+                            <button type="button" class="btn btn-outline" onclick="openChangePasswordModal()" data-i18n="profile_change_password">Đổi mật khẩu</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="page-panel">
+                    <div class="section-header">
+                        <div>
+                            <h2 class="section-title" data-i18n="profile_security">Bảo mật tài khoản</h2>
+                            <p class="section-subtitle" data-i18n="profile_security_copy">Khu vực này được thiết kế gọn hơn, nhìn phát biết ngay trạng thái tài khoản và thao tác đổi mật khẩu.</p>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-secondary" onclick="window.history.back()" data-i18n="common_back">Quay lại</button>
+                        <button class="btn btn-outline" onclick="AuthService.logout()" data-i18n="common_logout">Đăng xuất</button>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="changePasswordModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="changePasswordTitle">Đổi mật khẩu</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="changePasswordForm" onsubmit="handleChangePassword(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="oldPassword" id="oldPasswordLabel">Mật khẩu cũ</label>
+                        <input type="password" id="oldPassword" name="oldPassword" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword" id="newPasswordLabel">Mật khẩu mới</label>
+                        <input type="password" id="newPassword" name="newPassword" class="form-control" required>
+                        <small id="passwordHint">Tối thiểu 6 ký tự</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword" id="confirmPasswordLabel">Xác nhận mật khẩu</label>
+                        <input type="password" id="confirmNewPassword" name="confirmNewPassword" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()" data-i18n="common_cancel">Hủy</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="common_save">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        document.querySelectorAll('[data-lang-btn]').forEach((button) => {
+            button.addEventListener('click', () => I18nService.setLanguage(button.dataset.langBtn));
+        });
+
+        let draftAvatarUrl = null;
+
+        function updateProfileStaticTexts() {
+            const isEnglish = I18nService.getLanguage() === 'en';
+            document.getElementById('changePasswordTitle').textContent = isEnglish ? 'Change password' : 'Đổi mật khẩu';
+            document.getElementById('oldPasswordLabel').textContent = isEnglish ? 'Current password' : 'Mật khẩu cũ';
+            document.getElementById('newPasswordLabel').textContent = isEnglish ? 'New password' : 'Mật khẩu mới';
+            document.getElementById('confirmPasswordLabel').textContent = isEnglish ? 'Confirm password' : 'Xác nhận mật khẩu';
+            document.getElementById('passwordHint').textContent = isEnglish ? 'At least 6 characters' : 'Tối thiểu 6 ký tự';
+            document.getElementById('dropdownEditProfile').textContent = isEnglish ? 'Edit profile' : 'Chỉnh sửa hồ sơ';
+            document.getElementById('dropdownChangeAvatar').textContent = isEnglish ? 'Update avatar' : 'Cập nhật ảnh đại diện';
+            document.querySelector('.avatar-edit-hint').textContent = isEnglish ? 'Change photo' : 'Đổi ảnh';
+            document.querySelector('.auth-note').textContent = isEnglish
+                ? 'Hover over the avatar or click the image to update your profile photo.'
+                : 'Di chuột vào avatar hoặc bấm vào ảnh để cập nhật ảnh đại diện.';
+            document.querySelector('#profileForm button[type="submit"]').textContent = isEnglish ? 'Save changes' : 'Lưu thay đổi';
+            document.querySelector('#profileForm .btn-secondary').textContent = isEnglish ? 'Reset' : 'Đặt lại';
+        }
+
+        function populateProfile(user) {
+            if (!user) return;
+            const displayName = UIUtils.getDisplayName(user);
+
+            UIUtils.renderAvatar(document.getElementById('userAvatar'), user);
+            UIUtils.renderAvatar(document.getElementById('profileAvatar'), user);
+            document.getElementById('profileName').textContent = displayName;
+            document.getElementById('profileRole').textContent = user.role || (I18nService.getLanguage() === 'en' ? 'User' : 'Người dùng');
+            document.getElementById('profileUsername').value = user.username || '';
+            document.getElementById('profileEmail').value = user.email || '';
+            document.getElementById('profileDisplayName').value = user.displayName || '';
+            document.getElementById('role').textContent = user.role || 'USER';
+            document.getElementById('userDropdownName').textContent = displayName;
+            document.getElementById('userDropdownEmail').textContent = user.email || '-';
+            draftAvatarUrl = user.avatarUrl || null;
+        }
+
+        async function loadProfile() {
+            const user = await AuthService.ensureCurrentUser();
+            populateProfile(user);
+            updateProfileStaticTexts();
+        }
+
+        function resetProfileForm() {
+            loadProfile();
+        }
+
+        document.getElementById('dropdownChangeAvatar').addEventListener('click', (event) => {
+            event.preventDefault();
+            document.getElementById('avatarUpload').click();
+        });
+
+        document.getElementById('avatarUpload').addEventListener('change', async (event) => {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            const isEnglish = I18nService.getLanguage() === 'en';
+            if (!file.type.startsWith('image/')) {
+                UIUtils.showError(isEnglish ? 'Please choose an image file' : 'Vui lòng chọn file hình ảnh');
+                return;
+            }
+
+            draftAvatarUrl = await UIUtils.fileToDataUrl(file);
+            UIUtils.renderAvatar(document.getElementById('profileAvatar'), { ...AuthService.getCurrentUser(), avatarUrl: draftAvatarUrl });
+        });
+
+        async function handleProfileUpdate(e) {
+            e.preventDefault();
+            const isEnglish = I18nService.getLanguage() === 'en';
+            const currentUser = AuthService.getCurrentUser();
+            if (!currentUser?.id) {
+                UIUtils.showError(isEnglish ? 'Cannot identify current user' : 'Không xác định được người dùng hiện tại');
+                return;
+            }
+
+            const payload = {
+                username: currentUser.username,
+                email: document.getElementById('profileEmail').value,
+                displayName: document.getElementById('profileDisplayName').value,
+                avatarUrl: draftAvatarUrl,
+                role: currentUser.role,
+                active: currentUser.active ?? true
+            };
+
+            try {
+                UIUtils.showLoading();
+                const updatedUser = await UserService.update(currentUser.id, payload);
+                UIUtils.hideLoading();
+                UIUtils.syncCurrentUser({ ...currentUser, ...updatedUser });
+                populateProfile({ ...currentUser, ...updatedUser });
+                UIUtils.showSuccess(isEnglish ? 'Profile updated successfully' : 'Cập nhật hồ sơ thành công');
+            } catch (error) {
+                UIUtils.hideLoading();
+                UIUtils.showError(isEnglish ? 'Failed to update profile' : 'Cập nhật hồ sơ thất bại');
+                console.error(error);
+            }
+        }
+
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const isEnglish = I18nService.getLanguage() === 'en';
+
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+            if (newPassword !== confirmNewPassword) {
+                UIUtils.showError(isEnglish ? 'Password confirmation does not match' : 'Mật khẩu xác nhận không khớp');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                UIUtils.showError(isEnglish ? 'New password must be at least 6 characters' : 'Mật khẩu mới phải có ít nhất 6 ký tự');
+                return;
+            }
+
+            UIUtils.showSuccess(isEnglish ? 'Change password feature is under development' : 'Tính năng đổi mật khẩu đang được phát triển');
+            closeModal();
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('changePasswordForm').reset();
+            updateProfileStaticTexts();
+            UIUtils.showModal('changePasswordModal');
+        }
+
+        function closeModal() {
+            UIUtils.hideModal('changePasswordModal');
+        }
+
+        document.addEventListener('app:languageChanged', () => {
+            loadProfile();
+        });
+
+        document.addEventListener('app:userUpdated', (event) => {
+            populateProfile(event.detail.user);
+        });
+
+        loadProfile();
+    </script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký - Jolliebee</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-title-key="register_title">
+    <main class="auth-layout">
+        <section class="auth-showcase">
+            <h1 class="hero-title" data-i18n="register_hero_title">Bắt đầu quản lý dự án với quy trình gọn gàng và dễ theo dõi hơn.</h1>
+            <p class="hero-copy" data-i18n="register_hero_copy">
+                Biểu mẫu đăng ký được tối giản để người dùng mới vào là hiểu ngay. Các trường thông tin rõ ràng, khoảng trắng thoáng và giao diện đồng bộ với toàn bộ hệ thống.
+            </p>
+
+            <div class="hero-metrics">
+                <div class="metric-pill">
+                    <span>01</span>
+                    <strong data-i18n="register_step_1">Tạo tài khoản</strong>
+                </div>
+                <div class="metric-pill">
+                    <span>02</span>
+                    <strong data-i18n="register_step_2">Tạo dự án</strong>
+                </div>
+                <div class="metric-pill">
+                    <span>03</span>
+                    <strong data-i18n="register_step_3">Theo dõi issue</strong>
+                </div>
+            </div>
+
+            <div class="visual-cluster mt-4">
+                <div class="visual-panel primary">
+                    <div class="device-header">
+                        <div>
+                            <div class="card-kicker">Onboarding</div>
+                            <strong>Jolliebee</strong>
+                        </div>
+                        <div class="dots"><span></span><span></span><span></span></div>
+                    </div>
+                    <div class="device-lines">
+                        <div class="device-line"></div>
+                        <div class="device-line medium"></div>
+                        <div class="device-line short"></div>
+                    </div>
+                    <div class="chart-block mt-3"></div>
+                </div>
+                <div class="visual-panel secondary">
+                    <span class="panel-chip">Secure</span>
+                    <div class="device-lines mt-2">
+                        <div class="device-line medium"></div>
+                        <div class="device-line short"></div>
+                    </div>
+                </div>
+                <div class="visual-panel tertiary">
+                    <span class="panel-chip">Ready</span>
+                    <div class="chart-block mt-2"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="auth-box">
+            <div class="auth-topbar">
+                <div class="auth-brand">Jolliebee</div>
+                <div class="language-switcher" aria-label="Language switcher">
+                    <button type="button" class="lang-btn" data-lang-btn="vi">VI</button>
+                    <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+                </div>
+            </div>
+
+            <div class="auth-header">
+                <h1 data-i18n="register_header">Tạo tài khoản mới</h1>
+                <p data-i18n="register_subtitle">Điền thông tin bên dưới để vào hệ thống quản lý dự án với giao diện mới.</p>
+            </div>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label for="username" data-i18n="register_username">Tên đăng nhập</label>
+                    <input type="text" id="username" name="username" class="form-control" data-i18n-placeholder="register_username_placeholder" placeholder="Nhập tên đăng nhập" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email" data-i18n="register_email">Email</label>
+                    <input type="email" id="email" name="email" class="form-control" data-i18n-placeholder="register_email_placeholder" placeholder="Nhập địa chỉ email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="displayName" data-i18n="register_display_name">Tên hiển thị</label>
+                    <input type="text" id="displayName" name="displayName" class="form-control" data-i18n-placeholder="register_display_name_placeholder" placeholder="Nhập tên hiển thị" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" data-i18n="register_password">Mật khẩu</label>
+                    <input type="password" id="password" name="password" class="form-control" data-i18n-placeholder="register_password_placeholder" placeholder="Tối thiểu 6 ký tự" required>
+                    <div class="field-hint" data-i18n="register_password_hint">Mật khẩu nên có ít nhất 6 ký tự để an toàn hơn.</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword" data-i18n="register_confirm_password">Xác nhận mật khẩu</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" data-i18n-placeholder="register_confirm_password_placeholder" placeholder="Nhập lại mật khẩu" required>
+                </div>
+
+                <div class="button-row">
+                    <button type="submit" class="btn btn-primary btn-large" data-i18n="register_submit">Đăng ký</button>
+                </div>
+            </form>
+
+            <div class="auth-footer">
+                <p>
+                    <span data-i18n="register_login_prompt">Đã có tài khoản?</span>
+                    <a href="/login" class="card-kicker" data-i18n="register_login_link">Đăng nhập</a>
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script>
+        document.querySelectorAll('[data-lang-btn]').forEach((button) => {
+            button.addEventListener('click', () => I18nService.setLanguage(button.dataset.langBtn));
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const displayName = document.getElementById('displayName').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const isEnglish = I18nService.getLanguage() === 'en';
+
+            if (password !== confirmPassword) {
+                UIUtils.showError(isEnglish ? 'Password confirmation does not match' : 'Mật khẩu xác nhận không khớp');
+                return;
+            }
+
+            if (password.length < 6) {
+                UIUtils.showError(isEnglish ? 'Password must be at least 6 characters' : 'Mật khẩu phải có ít nhất 6 ký tự');
+                return;
+            }
+
+            if (!UIUtils.validateEmail(email)) {
+                UIUtils.showError(isEnglish ? 'Invalid email address' : 'Email không hợp lệ');
+                return;
+            }
+
+            try {
+                UIUtils.showLoading();
+                await AuthService.register(username, email, password, displayName);
+                UIUtils.hideLoading();
+                UIUtils.showSuccess(isEnglish ? 'Registration successful! Please sign in.' : 'Đăng ký thành công! Đăng nhập ngay.');
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 2000);
+            } catch (error) {
+                UIUtils.hideLoading();
+                UIUtils.showError(isEnglish ? 'Registration failed. Please try again.' : 'Đăng ký thất bại. Vui lòng thử lại.');
+                console.error('Register Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>

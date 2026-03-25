@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dự án - Jolliebee</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-title-key="projects_title">
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/dashboard" class="navbar-brand">Jolliebee</a>
+            <ul class="navbar-menu">
+                <li><a href="/dashboard" class="navbar-link" data-i18n="nav_dashboard">Dashboard</a></li>
+                <li><a href="/projects" class="navbar-link active" data-i18n="nav_projects">Dự án</a></li>
+                <li><a href="/issues" class="navbar-link" data-i18n="nav_issues">Issues</a></li>
+                <li><a href="/profile" class="navbar-link" data-i18n="nav_profile">Hồ sơ</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="language-switcher">
+                    <button type="button" class="lang-btn" data-lang-btn="vi">VI</button>
+                    <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+                </div>
+                <div class="navbar-user">
+                    <div class="user-menu">
+                        <button type="button" class="user-menu-trigger" aria-label="User menu">
+                            <div class="user-avatar" id="userAvatar">A</div>
+                        </button>
+                        <div class="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <div class="user-dropdown-name" id="userDropdownName">Tên người dùng</div>
+                                <div class="user-dropdown-meta" id="userDropdownEmail">email@example.com</div>
+                            </div>
+                            <a href="/profile" class="user-dropdown-link" id="dropdownEditProfile">Chỉnh sửa hồ sơ</a>
+                            <a href="/profile#profileEditor" class="user-dropdown-link" id="dropdownUpdateAvatar">Cập nhật ảnh đại diện</a>
+                            <a href="#" class="user-dropdown-link" onclick="AuthService.logout(); return false;" data-i18n="common_logout">Đăng xuất</a>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline btn-small" onclick="AuthService.logout()" data-i18n="common_logout">Đăng xuất</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container page-shell">
+            <section class="page-hero">
+                <div class="section-header">
+                    <div>
+                        <div class="hero-badge" data-i18n="projects_badge">Quản lý dự án</div>
+                        <h1 class="page-title" data-i18n="projects_hero_title">Danh sách dự án được trình bày rõ ràng và dễ lọc.</h1>
+                        <p class="page-subtitle" data-i18n="projects_hero_copy">Người dùng có thể tìm nhanh, xem trạng thái và thao tác sửa xóa ngay trên cùng một màn hình.</p>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary" onclick="openCreateModal()" data-i18n="dashboard_create_project">Tạo dự án</button>
+                        <button class="btn btn-secondary" onclick="loadProjects()" data-i18n="common_refresh">Làm mới</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page-panel">
+                <div class="filter-bar">
+                    <input type="text" id="searchInput" class="form-control" data-i18n-placeholder="projects_search_placeholder" placeholder="Tìm kiếm theo tên hoặc mô tả dự án..." onkeyup="handleSearch()">
+                </div>
+            </section>
+
+            <section class="table-shell">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th data-i18n="projects_table_name">Tên dự án</th>
+                            <th data-i18n="projects_table_description">Mô tả</th>
+                            <th data-i18n="projects_table_status">Trạng thái</th>
+                            <th data-i18n="projects_table_actions">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="projectsTableBody">
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <p>Đang tải dữ liệu...</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </div>
+
+    <div class="modal" id="projectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" data-i18n="modal_create_project">Tạo dự án mới</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="projectForm" onsubmit="handleSubmit(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="projectId">
+                    <div class="form-group">
+                        <label for="name" data-i18n="modal_project_name">Tên dự án</label>
+                        <input type="text" id="name" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description" data-i18n="modal_project_description">Mô tả</label>
+                        <textarea id="description" name="description" class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="active">
+                            <input type="checkbox" id="active" name="active" checked>
+                            <span id="activeLabel">Kích hoạt dự án</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()" data-i18n="common_cancel">Hủy</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="common_save">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        document.querySelectorAll('[data-lang-btn]').forEach((button) => {
+            button.addEventListener('click', () => I18nService.setLanguage(button.dataset.langBtn));
+        });
+
+        async function loadCurrentUser() {
+            const user = await AuthService.ensureCurrentUser();
+            if (user) {
+                UIUtils.renderAvatar(document.getElementById('userAvatar'), user);
+                document.getElementById('userDropdownName').textContent = UIUtils.getDisplayName(user);
+                document.getElementById('userDropdownEmail').textContent = user.email || '-';
+            }
+        }
+
+        let allProjects = [];
+
+        function updateNavbarDropdownTexts() {
+            const isEnglish = I18nService.getLanguage() === 'en';
+            document.getElementById('dropdownEditProfile').textContent = isEnglish ? 'Edit profile' : 'Chỉnh sửa hồ sơ';
+            document.getElementById('dropdownUpdateAvatar').textContent = isEnglish ? 'Update avatar' : 'Cập nhật ảnh đại diện';
+        }
+
+        function updateProjectPageTexts() {
+            document.getElementById('activeLabel').textContent = I18nService.getLanguage() === 'en' ? 'Activate project' : 'Kích hoạt dự án';
+            updateNavbarDropdownTexts();
+        }
+
+        async function loadProjects() {
+            try {
+                UIUtils.showLoading();
+                allProjects = await ProjectService.getAll();
+                UIUtils.hideLoading();
+                renderProjects(allProjects);
+                updateProjectPageTexts();
+            } catch (error) {
+                UIUtils.hideLoading();
+                UIUtils.showError(I18nService.getLanguage() === 'en' ? 'Error loading projects' : 'Lỗi khi tải dự án');
+                console.error('Error:', error);
+            }
+        }
+
+        function renderProjects(projects) {
+            const tbody = document.getElementById('projectsTableBody');
+            const isEnglish = I18nService.getLanguage() === 'en';
+
+            if (!projects || projects.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">
+                                <h3>${I18nService.t('projects_empty')}</h3>
+                                <p>${I18nService.t('projects_empty_copy')}</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = projects.map((project, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><strong>${project.name}</strong></td>
+                    <td>${project.description || (isEnglish ? 'No description yet' : 'Chưa có mô tả')}</td>
+                    <td>
+                        <span class="badge ${project.active ? 'badge-success' : 'badge-warning'}">
+                            ${project.active ? I18nService.t('project_active') : I18nService.t('project_inactive')}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-links">
+                            <a class="action-link" href="/project/${project.id}">${I18nService.t('common_view')}</a>
+                            <a class="action-link" href="#" onclick="editProject('${project.id}'); return false;">${I18nService.t('common_edit')}</a>
+                            <a class="action-link delete" href="#" onclick="deleteProject('${project.id}'); return false;">${I18nService.t('common_delete')}</a>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allProjects.filter(p =>
+                p.name.toLowerCase().includes(query) ||
+                (p.description && p.description.toLowerCase().includes(query))
+            );
+            renderProjects(filtered);
+        }
+
+        function openCreateModal() {
+            document.getElementById('projectForm').reset();
+            document.getElementById('projectId').value = '';
+            document.querySelector('.modal-title').textContent = I18nService.t('modal_create_project');
+            UIUtils.showModal('projectModal');
+            updateProjectPageTexts();
+        }
+
+        async function editProject(projectId) {
+            try {
+                const project = await ProjectService.getById(projectId);
+                document.getElementById('projectId').value = project.id;
+                document.getElementById('name').value = project.name;
+                document.getElementById('description').value = project.description || '';
+                document.getElementById('active').checked = project.active;
+                document.querySelector('.modal-title').textContent = I18nService.getLanguage() === 'en' ? 'Edit project' : 'Chỉnh sửa dự án';
+                UIUtils.showModal('projectModal');
+                updateProjectPageTexts();
+            } catch (error) {
+                UIUtils.showError(I18nService.getLanguage() === 'en' ? 'Error loading project' : 'Lỗi khi tải dự án');
+            }
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const isEnglish = I18nService.getLanguage() === 'en';
+
+            const projectId = document.getElementById('projectId').value;
+            const data = {
+                name: document.getElementById('name').value,
+                description: document.getElementById('description').value,
+                active: document.getElementById('active').checked
+            };
+
+            try {
+                if (projectId) {
+                    await ProjectService.update(projectId, data);
+                    UIUtils.showSuccess(isEnglish ? 'Project updated successfully' : 'Dự án được cập nhật thành công');
+                } else {
+                    await ProjectService.create(data);
+                    UIUtils.showSuccess(isEnglish ? 'Project created successfully' : 'Dự án được tạo thành công');
+                }
+
+                closeModal();
+                loadProjects();
+            } catch (error) {
+                UIUtils.showError(isEnglish ? 'Error saving project' : 'Lỗi khi lưu dự án');
+                console.error('Error:', error);
+            }
+        }
+
+        async function deleteProject(projectId) {
+            const isEnglish = I18nService.getLanguage() === 'en';
+            if (confirm(isEnglish ? 'Are you sure you want to delete this project?' : 'Bạn có chắc muốn xóa dự án này?')) {
+                try {
+                    await ProjectService.delete(projectId);
+                    UIUtils.showSuccess(isEnglish ? 'Project deleted successfully' : 'Dự án được xóa thành công');
+                    loadProjects();
+                } catch (error) {
+                    UIUtils.showError(isEnglish ? 'Error deleting project' : 'Lỗi khi xóa dự án');
+                }
+            }
+        }
+
+        function closeModal() {
+            UIUtils.hideModal('projectModal');
+        }
+
+        document.addEventListener('app:languageChanged', () => {
+            updateProjectPageTexts();
+            renderProjects(allProjects);
+        });
+
+        document.addEventListener('app:userUpdated', (event) => {
+            UIUtils.renderAvatar(document.getElementById('userAvatar'), event.detail.user);
+            document.getElementById('userDropdownName').textContent = UIUtils.getDisplayName(event.detail.user);
+            document.getElementById('userDropdownEmail').textContent = event.detail.user.email || '-';
+        });
+
+        loadCurrentUser();
+        loadProjects();
+    </script>
+</body>
+</html>

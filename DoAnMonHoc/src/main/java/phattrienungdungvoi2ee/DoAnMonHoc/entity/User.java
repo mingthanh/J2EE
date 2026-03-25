@@ -1,10 +1,12 @@
 package phattrienungdungvoi2ee.DoAnMonHoc.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -33,10 +35,15 @@ public class User {
 	private String email;
 
 	@Column(length = 255)
+	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String password;
 
 	@Column(name = "display_name", length = 100)
 	private String displayName;
+
+	@Lob
+	@Column(name = "avatar_url", columnDefinition = "LONGTEXT")
+	private String avatarUrl;
 
 	@Column(length = 50)
 	private String role;

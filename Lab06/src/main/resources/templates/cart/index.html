@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{_layout}">
+<body>
+<section layout:fragment="content">
+    <div class="page-head">
+        <div>
+            <p class="eyebrow">Cart</p>
+            <h2 class="mb-1">Gio hang cua ban</h2>
+            <p class="page-subtitle mb-0">Xem lai so luong, tong tien va dat hang nhanh trong mot buoc.</p>
+        </div>
+        <a th:href="@{/products}" class="btn btn-outline-secondary">Tiep tuc mua hang</a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(cartItems)}" class="empty-state">
+        Gio hang cua ban dang trong.
+    </div>
+
+    <div th:unless="${#lists.isEmpty(cartItems)}">
+        <div class="table-wrap mb-3">
+            <table class="table app-table align-middle">
+                <thead>
+                <tr>
+                    <th>Ten san pham</th>
+                    <th style="width: 160px;">Gia</th>
+                    <th style="width: 160px;">So luong</th>
+                    <th style="width: 180px;">Tong tien</th>
+                    <th style="width: 130px;">Thao tac</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="item : ${cartItems}">
+                    <td th:text="${item.product.name}"></td>
+                    <td class="fw-semibold text-success" th:text="${item.product.price + ' VND'}"></td>
+                    <td>
+                        <form th:action="@{'/cart/update/' + ${item.product.id}}" method="post" class="inline-quantity-form">
+                            <input type="number" name="quantity" min="1" th:value="${item.quantity}" class="form-control form-control-sm quantity-input">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">Luu</button>
+                        </form>
+                    </td>
+                    <td class="fw-semibold" th:text="${item.lineTotal + ' VND'}"></td>
+                    <td>
+                        <form th:action="@{'/cart/remove/' + ${item.product.id}}" method="post">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Xoa</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="cart-summary">
+            <div>
+                <div class="text-secondary small" th:text="'Tong san pham: ' + ${cartItemCount}"></div>
+                <div class="fs-5 fw-semibold" th:text="'Tong thanh toan: ' + ${cartTotal} + ' VND'"></div>
+            </div>
+            <form th:action="@{/cart/checkout}" method="post">
+                <button type="submit" class="btn btn-primary">Dat hang</button>
+            </form>
+        </div>
+    </div>
+</section>
+</body>
+</html>

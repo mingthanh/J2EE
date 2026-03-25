@@ -9,8 +9,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import phattrienungdungvoi2ee.bai6_qlsp.Model.Category;
 import phattrienungdungvoi2ee.bai6_qlsp.Model.Product;
+import phattrienungdungvoi2ee.bai6_qlsp.Service.CartService;
 import phattrienungdungvoi2ee.bai6_qlsp.Service.CategoryService;
 import phattrienungdungvoi2ee.bai6_qlsp.Service.ProductService;
+
+import jakarta.servlet.http.HttpSession;
+
+import java.util.List;
 
 @Controller
 @RequestMapping("/products")
@@ -22,11 +27,31 @@ public class ProductController {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private CartService cartService;
+
     // LIST
     @GetMapping
-    public String listProducts(@RequestParam(required = false) String keyword, Model model) {
-        model.addAttribute("products", productService.searchProducts(keyword));
+    public String listProducts(@RequestParam(required = false) String keyword,
+                               @RequestParam(required = false) Long categoryId,
+                               @RequestParam(required = false) String sort,
+                               @RequestParam(defaultValue = "1") int page,
+                               Model model,
+                               HttpSession session) {
+        List<Product> filteredProducts = productService.getFilteredProducts(keyword, categoryId, sort);
+        int totalPages = productService.getTotalPages(filteredProducts.size());
+        int currentPage = Math.min(Math.max(page, 1), totalPages);
+
+        model.addAttribute("products", productService.getProductsByPage(filteredProducts, currentPage));
         model.addAttribute("keyword", keyword == null ? "" : keyword);
+        model.addAttribute("selectedCategoryId", categoryId);
+        model.addAttribute("selectedSort", sort == null ? "" : sort);
+        model.addAttribute("categories", categoryService.getAllCategories());
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("totalItems", filteredProducts.size());
+        model.addAttribute("startIndex", (currentPage - 1) * ProductService.PAGE_SIZE);
+        model.addAttribute("cartItemCount", cartService.getCartItemCount(session));
         return "product/list";
     }
 

@@ -36,8 +36,10 @@ public class SecurityConfig {
                 .userDetailsService(accountService)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
-                        .requestMatchers("/products").hasAnyRole("USER","ADMIN")
-                        .requestMatchers("/products/**").hasRole("ADMIN")
+                        .requestMatchers("/", "/products").hasAnyRole("USER","ADMIN")
+                        .requestMatchers("/cart/**").hasRole("USER")
+                        .requestMatchers("/orders/**").hasRole("ADMIN")
+                        .requestMatchers("/products/add", "/products/edit/**", "/products/delete/**", "/products/save").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form

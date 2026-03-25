@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Issues - Jolliebee</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-title-key="issues_title">
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/dashboard" class="navbar-brand">Jolliebee</a>
+            <ul class="navbar-menu">
+                <li><a href="/dashboard" class="navbar-link" data-i18n="nav_dashboard">Dashboard</a></li>
+                <li><a href="/projects" class="navbar-link" data-i18n="nav_projects">Dự án</a></li>
+                <li><a href="/issues" class="navbar-link active" data-i18n="nav_issues">Issues</a></li>
+                <li><a href="/profile" class="navbar-link" data-i18n="nav_profile">Hồ sơ</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="language-switcher">
+                    <button type="button" class="lang-btn" data-lang-btn="vi">VI</button>
+                    <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+                </div>
+                <div class="navbar-user">
+                    <div class="user-menu">
+                        <button type="button" class="user-menu-trigger" aria-label="User menu">
+                            <div class="user-avatar" id="userAvatar">A</div>
+                        </button>
+                        <div class="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <div class="user-dropdown-name" id="userDropdownName">Tên người dùng</div>
+                                <div class="user-dropdown-meta" id="userDropdownEmail">email@example.com</div>
+                            </div>
+                            <a href="/profile" class="user-dropdown-link" id="dropdownEditProfile">Chỉnh sửa hồ sơ</a>
+                            <a href="/profile#profileEditor" class="user-dropdown-link" id="dropdownUpdateAvatar">Cập nhật ảnh đại diện</a>
+                            <a href="#" class="user-dropdown-link" onclick="AuthService.logout(); return false;" data-i18n="common_logout">Đăng xuất</a>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline btn-small" onclick="AuthService.logout()" data-i18n="common_logout">Đăng xuất</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container page-shell">
+            <section class="page-hero">
+                <div class="section-header">
+                    <div>
+                        <div class="hero-badge" data-i18n="issues_badge">Issue tracking</div>
+                        <h1 class="page-title" data-i18n="issues_hero_title">Theo dõi issue theo mức ưu tiên và trạng thái một cách dễ nhìn.</h1>
+                        <p class="page-subtitle" data-i18n="issues_hero_copy">Bộ lọc, tìm kiếm và card layout được sắp xếp lại để người dùng thao tác nhanh hơn trên cả desktop và mobile.</p>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary" onclick="openCreateModal()" data-i18n="issues_create">Tạo issue</button>
+                        <button class="btn btn-secondary" onclick="loadIssues()" data-i18n="common_refresh">Làm mới</button>
+                    </div>
+                </div>
+            </section>
+
+            <section class="page-panel">
+                <div class="toolbar-grid">
+                    <input type="text" id="searchInput" class="form-control" data-i18n-placeholder="issues_search_placeholder" placeholder="Tìm kiếm issue..." onkeyup="handleSearch()">
+                    <select id="priorityFilter" class="form-control" onchange="handleFilter()"></select>
+                    <select id="statusFilter" class="form-control" onchange="handleFilter()"></select>
+                </div>
+            </section>
+
+            <section class="issues-grid" id="issuesGrid">
+                <div class="empty-state">
+                    <p>Đang tải issue...</p>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="modal" id="issueModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="issueModalTitle">Tạo issue mới</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="issueForm" onsubmit="handleSubmit(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="issueId">
+                    <div class="form-group">
+                        <label for="title" id="labelTitle">Tiêu đề</label>
+                        <input type="text" id="title" name="title" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description" id="labelDescription">Mô tả</label>
+                        <textarea id="description" name="description" class="form-control"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectId" id="labelProject">Dự án</label>
+                        <select id="projectId" name="projectId" class="form-control" required></select>
+                    </div>
+                    <div class="detail-grid">
+                        <div class="form-group">
+                            <label for="priority" id="labelPriority">Độ ưu tiên</label>
+                            <select id="priority" name="priority" class="form-control"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="status" id="labelStatus">Trạng thái</label>
+                            <select id="status" name="status" class="form-control"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()" data-i18n="common_cancel">Hủy</button>
+                    <button type="submit" class="btn btn-primary" data-i18n="common_save">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        document.querySelectorAll('[data-lang-btn]').forEach((button) => {
+            button.addEventListener('click', () => I18nService.setLanguage(button.dataset.langBtn));
+        });
+
+        async function loadCurrentUser() {
+            const user = await AuthService.ensureCurrentUser();
+            if (user) {
+                UIUtils.renderAvatar(document.getElementById('userAvatar'), user);
+                document.getElementById('userDropdownName').textContent = UIUtils.getDisplayName(user);
+                document.getElementById('userDropdownEmail').textContent = user.email || '-';
+            }
+        }
+
+        let allIssues = [];
+        let allProjects = [];
+
+        function updateNavbarDropdownTexts() {
+            const isEnglish = I18nService.getLanguage() === 'en';
+            document.getElementById('dropdownEditProfile').textContent = isEnglish ? 'Edit profile' : 'Chỉnh sửa hồ sơ';
+            document.getElementById('dropdownUpdateAvatar').textContent = isEnglish ? 'Update avatar' : 'Cập nhật ảnh đại diện';
+        }
+
+        function updateIssueOptions() {
+            const priorityFilter = document.getElementById('priorityFilter');
+            const statusFilter = document.getElementById('statusFilter');
+            const priority = document.getElementById('priority');
+            const status = document.getElementById('status');
+
+            priorityFilter.innerHTML = `
+                <option value="">${I18nService.t('issues_filter_priority')}</option>
+                <option value="High">${I18nService.t('issue_priority_high')}</option>
+                <option value="Medium">${I18nService.t('issue_priority_medium')}</option>
+                <option value="Low">${I18nService.t('issue_priority_low')}</option>
+            `;
+            statusFilter.innerHTML = `
+                <option value="">${I18nService.t('issues_filter_status')}</option>
+                <option value="Open">${I18nService.t('issue_status_open')}</option>
+                <option value="In Progress">${I18nService.t('issue_status_progress')}</option>
+                <option value="Done">${I18nService.t('issue_status_done')}</option>
+            `;
+            priority.innerHTML = `
+                <option value="Low">${I18nService.t('issue_priority_low')}</option>
+                <option value="Medium">${I18nService.t('issue_priority_medium')}</option>
+                <option value="High">${I18nService.t('issue_priority_high')}</option>
+            `;
+            status.innerHTML = `
+                <option value="Open">${I18nService.t('issue_status_open')}</option>
+                <option value="In Progress">${I18nService.t('issue_status_progress')}</option>
+                <option value="Done">${I18nService.t('issue_status_done')}</option>
+            `;
+
+            document.getElementById('labelTitle').textContent = I18nService.getLanguage() === 'en' ? 'Title' : 'Tiêu đề';
+            document.getElementById('labelDescription').textContent = I18nService.getLanguage() === 'en' ? 'Description' : 'Mô tả';
+            document.getElementById('labelProject').textContent = I18nService.getLanguage() === 'en' ? 'Project' : 'Dự án';
+            document.getElementById('labelPriority').textContent = I18nService.getLanguage() === 'en' ? 'Priority' : 'Độ ưu tiên';
+            document.getElementById('labelStatus').textContent = I18nService.getLanguage() === 'en' ? 'Status' : 'Trạng thái';
+            document.getElementById('issueModalTitle').textContent = I18nService.getLanguage() === 'en' ? 'Create issue' : 'Tạo issue mới';
+            updateNavbarDropdownTexts();
+        }
+
+        async function loadIssues() {
+            try {
+                UIUtils.showLoading();
+                allIssues = await IssueService.getAll();
+                UIUtils.hideLoading();
+                renderIssues(allIssues);
+            } catch (error) {
+                UIUtils.hideLoading();
+                UIUtils.showError(I18nService.getLanguage() === 'en' ? 'Error loading issues' : 'Lỗi khi tải issues');
+                console.error('Error:', error);
+            }
+        }
+
+        async function loadProjects() {
+            try {
+                allProjects = await ProjectService.getAll();
+                const select = document.getElementById('projectId');
+                select.innerHTML = `<option value="">${I18nService.getLanguage() === 'en' ? '-- Select project --' : '-- Chọn dự án --'}</option>` +
+                    allProjects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function renderIssues(issues) {
+            const grid = document.getElementById('issuesGrid');
+            const isEnglish = I18nService.getLanguage() === 'en';
+
+            if (!issues || issues.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <h3>${I18nService.t('issues_empty')}</h3>
+                        <p>${I18nService.t('issues_empty_copy')}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const priorityMap = {
+                High: I18nService.t('issue_priority_high'),
+                Medium: I18nService.t('issue_priority_medium'),
+                Low: I18nService.t('issue_priority_low')
+            };
+            const statusMap = {
+                Open: I18nService.t('issue_status_open'),
+                'In Progress': I18nService.t('issue_status_progress'),
+                Done: I18nService.t('issue_status_done')
+            };
+
+            grid.innerHTML = issues.map(issue => {
+                const priority = issue.priority || 'Medium';
+                const priorityClass = priority === 'High' ? 'badge-danger' : priority === 'Low' ? 'badge-info' : 'badge-warning';
+                const statusClass = issue.status === 'Done' ? 'badge-success' : issue.status === 'In Progress' ? 'badge-primary' : 'badge-info';
+                const project = allProjects.find(p => p.id === issue.projectId);
+
+                return `
+                    <article class="issue-card">
+                        <div class="card-kicker">${I18nService.t('nav_issues')}</div>
+                        <h3>${issue.title}</h3>
+                        <div class="issue-meta">
+                            <span class="badge ${priorityClass}">${priorityMap[priority] || priority}</span>
+                            <span class="badge ${statusClass}">${statusMap[issue.status] || issue.status || I18nService.t('issue_status_open')}</span>
+                        </div>
+                        <div class="issue-description">
+                            ${issue.description || (isEnglish ? 'No description yet for this issue.' : 'Chưa có mô tả cho issue này.')}
+                        </div>
+                        ${project ? `<p class="text-muted">${isEnglish ? 'Project' : 'Dự án'}: <strong>${project.name}</strong></p>` : ''}
+                        <div class="issue-footer">
+                            <small>${UIUtils.formatDate(issue.createdAt || new Date())}</small>
+                            <div class="action-links">
+                                <a class="action-link" href="#" onclick="editIssue('${issue.id}'); return false;">${I18nService.t('common_edit')}</a>
+                                <a class="action-link delete" href="#" onclick="deleteIssue('${issue.id}'); return false;">${I18nService.t('common_delete')}</a>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allIssues.filter(i =>
+                i.title.toLowerCase().includes(query) ||
+                (i.description && i.description.toLowerCase().includes(query))
+            );
+            renderIssues(filtered);
+        }
+
+        function handleFilter() {
+            const priority = document.getElementById('priorityFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const filtered = allIssues.filter(i => {
+                if (priority && i.priority !== priority) return false;
+                if (status && i.status !== status) return false;
+                return true;
+            });
+            renderIssues(filtered);
+        }
+
+        function openCreateModal() {
+            document.getElementById('issueForm').reset();
+            document.getElementById('issueId').value = '';
+            updateIssueOptions();
+            UIUtils.showModal('issueModal');
+        }
+
+        async function editIssue(issueId) {
+            try {
+                const issue = await IssueService.getById(issueId);
+                document.getElementById('issueId').value = issue.id;
+                document.getElementById('title').value = issue.title;
+                document.getElementById('description').value = issue.description || '';
+                document.getElementById('projectId').value = issue.projectId || '';
+                updateIssueOptions();
+                document.getElementById('priority').value = issue.priority || 'Medium';
+                document.getElementById('status').value = issue.status || 'Open';
+                document.getElementById('issueModalTitle').textContent = I18nService.getLanguage() === 'en' ? 'Edit issue' : 'Chỉnh sửa issue';
+                UIUtils.showModal('issueModal');
+            } catch (error) {
+                UIUtils.showError(I18nService.getLanguage() === 'en' ? 'Error loading issue' : 'Lỗi khi tải issue');
+            }
+        }
+
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const isEnglish = I18nService.getLanguage() === 'en';
+            const issueId = document.getElementById('issueId').value;
+            const data = {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                projectId: document.getElementById('projectId').value,
+                priority: document.getElementById('priority').value,
+                status: document.getElementById('status').value
+            };
+
+            try {
+                if (issueId) {
+                    await IssueService.update(issueId, data);
+                    UIUtils.showSuccess(isEnglish ? 'Issue updated successfully' : 'Issue được cập nhật thành công');
+                } else {
+                    await IssueService.create(data);
+                    UIUtils.showSuccess(isEnglish ? 'Issue created successfully' : 'Issue được tạo thành công');
+                }
+                closeModal();
+                loadIssues();
+            } catch (error) {
+                UIUtils.showError(isEnglish ? 'Error saving issue' : 'Lỗi khi lưu issue');
+                console.error('Error:', error);
+            }
+        }
+
+        async function deleteIssue(issueId) {
+            const isEnglish = I18nService.getLanguage() === 'en';
+            if (confirm(isEnglish ? 'Are you sure you want to delete this issue?' : 'Bạn có chắc muốn xóa issue này?')) {
+                try {
+                    await IssueService.delete(issueId);
+                    UIUtils.showSuccess(isEnglish ? 'Issue deleted successfully' : 'Issue được xóa thành công');
+                    loadIssues();
+                } catch (error) {
+                    UIUtils.showError(isEnglish ? 'Error deleting issue' : 'Lỗi khi xóa issue');
+                }
+            }
+        }
+
+        function closeModal() {
+            UIUtils.hideModal('issueModal');
+        }
+
+        document.addEventListener('app:languageChanged', async () => {
+            updateIssueOptions();
+            await loadProjects();
+            renderIssues(allIssues);
+        });
+
+        document.addEventListener('app:userUpdated', (event) => {
+            UIUtils.renderAvatar(document.getElementById('userAvatar'), event.detail.user);
+            document.getElementById('userDropdownName').textContent = UIUtils.getDisplayName(event.detail.user);
+            document.getElementById('userDropdownEmail').textContent = event.detail.user.email || '-';
+        });
+
+        updateIssueOptions();
+        loadCurrentUser();
+        loadProjects();
+        loadIssues();
+    </script>
+</body>
+</html>

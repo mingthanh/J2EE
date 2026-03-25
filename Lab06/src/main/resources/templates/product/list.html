@@ -2,42 +2,83 @@
 <html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" layout:decorate="~{_layout}">
 <body>
 <section layout:fragment="content">
-    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">San pham</h2>
-        <a th:href="@{/products/add}" class="btn btn-primary" sec:authorize="hasRole('ADMIN')">Them san pham</a>
+    <div class="page-head">
+        <div>
+            <p class="eyebrow">Catalog</p>
+            <h2 class="mb-1">Danh sach san pham</h2>
+            <p class="page-subtitle mb-0">Quan ly, tim kiem va thao tac nhanh tren tat ca san pham trong he thong.</p>
+        </div>
+        <div class="page-actions">
+            <a th:href="@{/cart}" class="btn btn-outline-secondary" sec:authorize="hasRole('USER')">Xem gio hang</a>
+            <a th:href="@{/orders}" class="btn btn-outline-secondary" sec:authorize="hasRole('ADMIN')">Xem don hang</a>
+            <a th:href="@{/products/add}" class="btn btn-primary" sec:authorize="hasRole('ADMIN')">Them san pham</a>
+        </div>
     </div>
 
-    <form th:action="@{/products}" method="get" class="row g-2 mb-3">
-        <div class="col-sm-8 col-md-6">
+    <form th:action="@{/products}" method="get" class="filter-card row g-3 mb-3 align-items-end">
+        <div class="col-lg-4 col-md-6">
+            <label class="form-label">Tim theo ten</label>
             <input type="text" name="keyword" class="form-control" th:value="${keyword}" placeholder="Tim theo ten san pham...">
         </div>
-        <div class="col-auto">
+        <div class="col-lg-3 col-md-6">
+            <label class="form-label">Danh muc</label>
+            <select name="categoryId" class="form-select">
+                <option value="">Tat ca danh muc</option>
+                <option th:each="category : ${categories}"
+                        th:value="${category.id}"
+                        th:text="${category.name}"
+                        th:selected="${selectedCategoryId != null and selectedCategoryId == category.id}"></option>
+            </select>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <label class="form-label">Sap xep</label>
+            <select name="sort" class="form-select">
+                <option value="">Mac dinh</option>
+                <option value="priceAsc" th:selected="${selectedSort == 'priceAsc'}">Gia tang dan</option>
+                <option value="priceDesc" th:selected="${selectedSort == 'priceDesc'}">Gia giam dan</option>
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-6 d-grid">
             <button type="submit" class="btn btn-outline-secondary">Tim kiem</button>
         </div>
-        <div class="col-auto" th:if="${keyword != null and !#strings.isEmpty(keyword)}">
+        <div class="col-12" th:if="${(keyword != null and !#strings.isEmpty(keyword)) or selectedCategoryId != null or (selectedSort != null and !#strings.isEmpty(selectedSort))}">
             <a th:href="@{/products}" class="btn btn-light border">Bo loc</a>
         </div>
     </form>
+
+    <div class="stats-row mb-3" sec:authorize="hasRole('ADMIN')">
+        <div class="stat-card">
+            <span class="stat-label">Tong so</span>
+            <strong th:text="${totalItems}">0</strong>
+            <small>san pham phu hop</small>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Hien thi</span>
+            <strong>5</strong>
+            <small>san pham moi trang</small>
+        </div>
+    </div>
 
     <div th:if="${#lists.isEmpty(products)}" class="empty-state">
         Khong co san pham phu hop.
     </div>
 
     <div th:unless="${#lists.isEmpty(products)}" class="table-wrap">
-        <table class="table table-hover align-middle">
+        <table class="table app-table align-middle">
             <thead>
             <tr>
-                <th style="width: 70px;">ID</th>
+                <th style="width: 70px;">STT</th>
                 <th style="width: 100px;">Hinh</th>
                 <th>Ten san pham</th>
                 <th style="width: 160px;">Gia</th>
                 <th style="width: 180px;">Danh muc</th>
+                <th style="width: 170px;" sec:authorize="hasRole('USER')">Gio hang</th>
                 <th style="width: 180px;" sec:authorize="hasRole('ADMIN')">Hanh dong</th>
             </tr>
             </thead>
             <tbody>
-            <tr th:each="product : ${products}">
-                <td th:text="${product.id}"></td>
+            <tr th:each="product, stat : ${products}">
+                <td th:text="${startIndex + stat.count}"></td>
                 <td>
                     <img th:if="${product.image != null and !#strings.isEmpty(product.image)}"
                          th:src="${product.image}"
@@ -48,12 +89,18 @@
                         No image
                     </div>
                 </td>
-                <td th:text="${product.name}"></td>
+                <td class="fw-semibold" th:text="${product.name}"></td>
                 <td class="fw-semibold text-success" th:text="${product.price != null ? product.price + ' VND' : 'N/A'}"></td>
                 <td>
-                    <span th:text="${product.category != null ? product.category.name : 'Khong co'}"></span>
+                    <span class="soft-badge" th:text="${product.category != null ? product.category.name : 'Khong co'}"></span>
                 </td>
-                <td class="d-flex gap-2" sec:authorize="hasRole('ADMIN')">
+                <td sec:authorize="hasRole('USER')">
+                    <form th:action="@{'/cart/add/' + ${product.id}}" method="post" class="inline-quantity-form">
+                        <input type="number" name="quantity" min="1" value="1" class="form-control form-control-sm quantity-input">
+                        <button type="submit" class="btn btn-sm btn-outline-primary">Them</button>
+                    </form>
+                </td>
+                <td class="action-group" sec:authorize="hasRole('ADMIN')">
                     <a th:href="@{'/products/edit/' + ${product.id}}" class="btn btn-sm btn-outline-secondary">Sua</a>
                     <a th:href="@{'/products/delete/' + ${product.id}}"
                        class="btn btn-sm btn-outline-danger"
@@ -62,6 +109,20 @@
             </tr>
             </tbody>
         </table>
+    </div>
+
+    <div class="pagination-bar mt-3" th:if="${totalPages > 1}">
+        <a class="btn btn-outline-secondary"
+           th:classappend="${currentPage == 1} ? ' disabled'"
+           th:href="@{/products(keyword=${keyword}, categoryId=${selectedCategoryId}, sort=${selectedSort}, page=${currentPage - 1})}">
+            Previous
+        </a>
+        <div class="page-indicator" th:text="'Trang ' + ${currentPage} + ' / ' + ${totalPages}"></div>
+        <a class="btn btn-outline-secondary"
+           th:classappend="${currentPage == totalPages} ? ' disabled'"
+           th:href="@{/products(keyword=${keyword}, categoryId=${selectedCategoryId}, sort=${selectedSort}, page=${currentPage + 1})}">
+            Next
+        </a>
     </div>
 </section>
 </body>

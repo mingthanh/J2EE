@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Jolliebee</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-title-key="login_title">
+    <main class="auth-layout">
+        <section class="auth-showcase">
+            <h1 class="hero-title" data-i18n="login_hero_title">Jolliebee</h1>
+            <p class="hero-copy" data-i18n="login_hero_copy">
+                Giao diện được thiết kế lại theo hướng hiện đại, dễ nhìn và dễ thao tác, giúp người dùng tập trung vào công việc chính:
+                theo dõi dự án, issue và tiến độ trong một nơi duy nhất.
+            </p>
+
+            <div class="hero-metrics">
+                <div class="metric-pill">
+                    <span data-i18n="dashboard_in_progress">Đang xử lý</span>
+                    <strong data-i18n="login_metric_focus">Tập trung</strong>
+                </div>
+                <div class="metric-pill">
+                    <span data-i18n="common_view_all">Xem tất cả</span>
+                    <strong data-i18n="login_metric_usability">Dễ sử dụng</strong>
+                </div>
+                <div class="metric-pill">
+                    <span data-i18n="nav_profile">Hồ sơ</span>
+                    <strong data-i18n="login_metric_team">Cho nhóm</strong>
+                </div>
+            </div>
+
+            <div class="visual-cluster mt-4">
+                <div class="visual-panel primary">
+                    <div class="device-header">
+                        <div>
+                            <div class="card-kicker" data-i18n="dashboard_badge">Dashboard thông minh</div>
+                            <strong>Jolliebee Workspace</strong>
+                        </div>
+                        <div class="dots"><span></span><span></span><span></span></div>
+                    </div>
+                    <div class="chart-block"></div>
+                    <div class="device-lines">
+                        <div class="device-line"></div>
+                        <div class="device-line medium"></div>
+                        <div class="device-line short"></div>
+                    </div>
+                </div>
+                <div class="visual-panel secondary">
+                    <div class="panel-row">
+                        <div class="device-avatar"></div>
+                        <span class="panel-chip">Jolliebee</span>
+                    </div>
+                    <div class="device-lines">
+                        <div class="device-line medium"></div>
+                        <div class="device-line short"></div>
+                    </div>
+                </div>
+                <div class="visual-panel tertiary">
+                    <span class="panel-chip">UI / UX</span>
+                    <div class="chart-block mt-2"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="auth-box">
+            <div class="auth-topbar">
+                <div class="auth-brand">Jolliebee</div>
+                <div class="language-switcher" aria-label="Language switcher">
+                    <button type="button" class="lang-btn" data-lang-btn="vi">VI</button>
+                    <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+                </div>
+            </div>
+
+            <div class="auth-header">
+                <h1 data-i18n="login_welcome">Chào mừng bạn quay lại</h1>
+                <p data-i18n="login_subtitle">Đăng nhập để tiếp tục quản lý dự án, issue và công việc trong ngày.</p>
+            </div>
+
+            <div class="demo-info">
+                <strong data-i18n="login_card_title">Đăng nhập</strong>
+                <p data-i18n="login_card_copy">Nhập tài khoản và mật khẩu để vào dashboard mới.</p>
+            </div>
+
+            <form id="loginForm" method="post" action="/login">
+                <div class="form-group">
+                    <label for="username" data-i18n="login_username">Tên đăng nhập</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="form-control"
+                        data-i18n-placeholder="login_username_placeholder"
+                        placeholder="Ví dụ: admin"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password" data-i18n="login_password">Mật khẩu</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-control"
+                        data-i18n-placeholder="login_password_placeholder"
+                        placeholder="Nhập mật khẩu"
+                        required
+                    >
+                </div>
+
+                <div class="button-row">
+                    <button type="submit" class="btn btn-primary btn-large" data-i18n="login_submit">
+                        Đăng nhập
+                    </button>
+                </div>
+            </form>
+
+            <div class="auth-footer">
+                <p>
+                    <span data-i18n="login_register_prompt">Chưa có tài khoản?</span>
+                    <a href="/register" class="card-kicker" data-i18n="login_register_link">Đăng ký ngay</a>
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <script src="/js/app.js"></script>
+    <script>
+        document.querySelectorAll('[data-lang-btn]').forEach((button) => {
+            button.addEventListener('click', () => I18nService.setLanguage(button.dataset.langBtn));
+        });
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('error')) {
+            UIUtils.showError(I18nService.getLanguage() === 'en'
+                ? 'Incorrect username or password'
+                : 'Tên đăng nhập hoặc mật khẩu không chính xác');
+        }
+        if (params.has('logout')) {
+            UIUtils.showSuccess(I18nService.getLanguage() === 'en'
+                ? 'Logged out successfully'
+                : 'Đăng xuất thành công');
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', () => {
+            UIUtils.showLoading();
+        });
+    </script>
+</body>
+</html>
