@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Issues - Jolliebee</title>
+    <title>Công việc - Jolliebee</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body data-title-key="issues_title">
@@ -47,12 +47,12 @@
             <section class="page-hero">
                 <div class="section-header">
                     <div>
-                        <div class="hero-badge" data-i18n="issues_badge">Issue tracking</div>
-                        <h1 class="page-title" data-i18n="issues_hero_title">Theo dõi issue theo mức ưu tiên và trạng thái một cách dễ nhìn.</h1>
-                        <p class="page-subtitle" data-i18n="issues_hero_copy">Bộ lọc, tìm kiếm và card layout được sắp xếp lại để người dùng thao tác nhanh hơn trên cả desktop và mobile.</p>
+                        <div class="hero-badge" data-i18n="issues_badge">Theo dõi công việc</div>
+                        <h1 class="page-title" data-i18n="issues_hero_title">Theo dõi công việc theo mức ưu tiên và trạng thái một cách dễ nhìn.</h1>
+                        <p class="page-subtitle" data-i18n="issues_hero_copy">Bộ lọc, tìm kiếm và bố cục thẻ được sắp xếp lại để người dùng thao tác nhanh hơn trên cả máy tính và điện thoại.</p>
                     </div>
                     <div class="hero-actions">
-                        <button class="btn btn-primary" onclick="openCreateModal()" data-i18n="issues_create">Tạo issue</button>
+                        <button class="btn btn-primary" onclick="openCreateModal()" data-i18n="issues_create">Tạo công việc</button>
                         <button class="btn btn-secondary" onclick="loadIssues()" data-i18n="common_refresh">Làm mới</button>
                     </div>
                 </div>
@@ -60,7 +60,7 @@
 
             <section class="page-panel">
                 <div class="toolbar-grid">
-                    <input type="text" id="searchInput" class="form-control" data-i18n-placeholder="issues_search_placeholder" placeholder="Tìm kiếm issue..." onkeyup="handleSearch()">
+                    <input type="text" id="searchInput" class="form-control" data-i18n-placeholder="issues_search_placeholder" placeholder="Tìm kiếm công việc..." onkeyup="handleSearch()">
                     <select id="priorityFilter" class="form-control" onchange="handleFilter()"></select>
                     <select id="statusFilter" class="form-control" onchange="handleFilter()"></select>
                 </div>
@@ -68,7 +68,7 @@
 
             <section class="issues-grid" id="issuesGrid">
                 <div class="empty-state">
-                    <p>Đang tải issue...</p>
+                    <p>Đang tải công việc...</p>
                 </div>
             </section>
         </div>
@@ -77,7 +77,7 @@
     <div class="modal" id="issueModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title" id="issueModalTitle">Tạo issue mới</h2>
+                <h2 class="modal-title" id="issueModalTitle">Tạo công việc mới</h2>
                 <button class="close-btn" onclick="closeModal()">&times;</button>
             </div>
             <form id="issueForm" onsubmit="handleSubmit(event)">
@@ -85,11 +85,18 @@
                     <input type="hidden" id="issueId">
                     <div class="form-group">
                         <label for="title" id="labelTitle">Tiêu đề</label>
-                        <input type="text" id="title" name="title" class="form-control" required>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="text" id="title" name="title" class="form-control" required>
+                            <button type="button" id="voiceTitleBtn" class="btn btn-secondary btn-small">🎤</button>
+                        </div>
+                        <small id="voiceStatus" style="display:block; margin-top:4px; color:#555;"></small>
                     </div>
                     <div class="form-group">
                         <label for="description" id="labelDescription">Mô tả</label>
-                        <textarea id="description" name="description" class="form-control"></textarea>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <textarea id="description" name="description" class="form-control"></textarea>
+                            <button type="button" id="voiceDescBtn" class="btn btn-secondary btn-small">🎤</button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="projectId" id="labelProject">Dự án</label>
@@ -131,6 +138,21 @@
 
         let allIssues = [];
         let allProjects = [];
+        const PRIORITY_OPTIONS = [
+            { value: 'LOW', labelKey: 'issue_priority_low' },
+            { value: 'MEDIUM', labelKey: 'issue_priority_medium' },
+            { value: 'HIGH', labelKey: 'issue_priority_high' }
+        ];
+        const STATUS_OPTIONS = [
+            { value: 'TODO', labelKey: 'issue_status_open' },
+            { value: 'IN_PROGRESS', labelKey: 'issue_status_progress' },
+            { value: 'REVIEW', labelKey: 'issue_status_review' },
+            { value: 'DONE', labelKey: 'issue_status_done' }
+        ];
+
+        function normalizeIssueId(rawValue) {
+            return (rawValue || '').replace(/[^\w-]/g, '').trim();
+        }
 
         function updateNavbarDropdownTexts() {
             const isEnglish = I18nService.getLanguage() === 'en';
@@ -143,36 +165,39 @@
             const statusFilter = document.getElementById('statusFilter');
             const priority = document.getElementById('priority');
             const status = document.getElementById('status');
+            const selectedPriorityFilter = priorityFilter.value;
+            const selectedStatusFilter = statusFilter.value;
+            const selectedPriority = priority.value;
+            const selectedStatus = status.value;
 
             priorityFilter.innerHTML = `
                 <option value="">${I18nService.t('issues_filter_priority')}</option>
-                <option value="High">${I18nService.t('issue_priority_high')}</option>
-                <option value="Medium">${I18nService.t('issue_priority_medium')}</option>
-                <option value="Low">${I18nService.t('issue_priority_low')}</option>
+                ${PRIORITY_OPTIONS.map(option => `<option value="${option.value}">${I18nService.t(option.labelKey)}</option>`).join('')}
             `;
             statusFilter.innerHTML = `
                 <option value="">${I18nService.t('issues_filter_status')}</option>
-                <option value="Open">${I18nService.t('issue_status_open')}</option>
-                <option value="In Progress">${I18nService.t('issue_status_progress')}</option>
-                <option value="Done">${I18nService.t('issue_status_done')}</option>
+                ${STATUS_OPTIONS.map(option => `<option value="${option.value}">${I18nService.t(option.labelKey)}</option>`).join('')}
             `;
-            priority.innerHTML = `
-                <option value="Low">${I18nService.t('issue_priority_low')}</option>
-                <option value="Medium">${I18nService.t('issue_priority_medium')}</option>
-                <option value="High">${I18nService.t('issue_priority_high')}</option>
-            `;
-            status.innerHTML = `
-                <option value="Open">${I18nService.t('issue_status_open')}</option>
-                <option value="In Progress">${I18nService.t('issue_status_progress')}</option>
-                <option value="Done">${I18nService.t('issue_status_done')}</option>
-            `;
+            priority.innerHTML = PRIORITY_OPTIONS
+                .map(option => `<option value="${option.value}">${I18nService.t(option.labelKey)}</option>`)
+                .join('');
+            status.innerHTML = STATUS_OPTIONS
+                .map(option => `<option value="${option.value}">${I18nService.t(option.labelKey)}</option>`)
+                .join('');
+
+            priorityFilter.value = selectedPriorityFilter;
+            statusFilter.value = selectedStatusFilter;
+            priority.value = selectedPriority || 'MEDIUM';
+            status.value = selectedStatus || 'TODO';
 
             document.getElementById('labelTitle').textContent = I18nService.getLanguage() === 'en' ? 'Title' : 'Tiêu đề';
             document.getElementById('labelDescription').textContent = I18nService.getLanguage() === 'en' ? 'Description' : 'Mô tả';
             document.getElementById('labelProject').textContent = I18nService.getLanguage() === 'en' ? 'Project' : 'Dự án';
             document.getElementById('labelPriority').textContent = I18nService.getLanguage() === 'en' ? 'Priority' : 'Độ ưu tiên';
             document.getElementById('labelStatus').textContent = I18nService.getLanguage() === 'en' ? 'Status' : 'Trạng thái';
-            document.getElementById('issueModalTitle').textContent = I18nService.getLanguage() === 'en' ? 'Create issue' : 'Tạo issue mới';
+            document.getElementById('issueModalTitle').textContent = document.getElementById('issueId').value
+                ? (I18nService.getLanguage() === 'en' ? 'Edit issue' : 'Chỉnh sửa công việc')
+                : (I18nService.getLanguage() === 'en' ? 'Create issue' : 'Tạo công việc mới');
             updateNavbarDropdownTexts();
         }
 
@@ -180,11 +205,12 @@
             try {
                 UIUtils.showLoading();
                 allIssues = await IssueService.getAll();
+                QuickSearchService.invalidate();
                 UIUtils.hideLoading();
                 renderIssues(allIssues);
             } catch (error) {
                 UIUtils.hideLoading();
-                UIUtils.showError(I18nService.getLanguage() === 'en' ? 'Error loading issues' : 'Lỗi khi tải issues');
+                UIUtils.showError(I18nService.getLanguage() === 'en' ? 'Error loading issues' : 'Lỗi khi tải danh sách công việc');
                 console.error('Error:', error);
             }
         }
@@ -215,20 +241,29 @@
             }
 
             const priorityMap = {
-                High: I18nService.t('issue_priority_high'),
-                Medium: I18nService.t('issue_priority_medium'),
-                Low: I18nService.t('issue_priority_low')
+                HIGH: I18nService.t('issue_priority_high'),
+                MEDIUM: I18nService.t('issue_priority_medium'),
+                LOW: I18nService.t('issue_priority_low')
             };
             const statusMap = {
-                Open: I18nService.t('issue_status_open'),
-                'In Progress': I18nService.t('issue_status_progress'),
-                Done: I18nService.t('issue_status_done')
+                TODO: I18nService.t('issue_status_open'),
+                IN_PROGRESS: I18nService.t('issue_status_progress'),
+                REVIEW: I18nService.t('issue_status_review'),
+                DONE: I18nService.t('issue_status_done')
             };
 
             grid.innerHTML = issues.map(issue => {
-                const priority = issue.priority || 'Medium';
-                const priorityClass = priority === 'High' ? 'badge-danger' : priority === 'Low' ? 'badge-info' : 'badge-warning';
-                const statusClass = issue.status === 'Done' ? 'badge-success' : issue.status === 'In Progress' ? 'badge-primary' : 'badge-info';
+                const priorityCode = issue.priorityCode || 'MEDIUM';
+                const priority = priorityMap[priorityCode] || issue.priority || priorityCode;
+                const priorityClass = priorityCode === 'HIGH' ? 'badge-danger' : priorityCode === 'LOW' ? 'badge-info' : 'badge-warning';
+                const statusCode = issue.statusCode || 'TODO';
+                const statusClass = statusCode === 'DONE'
+                    ? 'badge-success'
+                    : statusCode === 'IN_PROGRESS'
+                        ? 'badge-primary'
+                        : statusCode === 'REVIEW'
+                            ? 'badge-warning'
+                            : 'badge-info';
                 const project = allProjects.find(p => p.id === issue.projectId);
 
                 return `
@@ -236,11 +271,11 @@
                         <div class="card-kicker">${I18nService.t('nav_issues')}</div>
                         <h3>${issue.title}</h3>
                         <div class="issue-meta">
-                            <span class="badge ${priorityClass}">${priorityMap[priority] || priority}</span>
-                            <span class="badge ${statusClass}">${statusMap[issue.status] || issue.status || I18nService.t('issue_status_open')}</span>
+                            <span class="badge ${priorityClass}">${priority}</span>
+                            <span class="badge ${statusClass}">${statusMap[statusCode] || issue.status || I18nService.t('issue_status_open')}</span>
                         </div>
                         <div class="issue-description">
-                            ${issue.description || (isEnglish ? 'No description yet for this issue.' : 'Chưa có mô tả cho issue này.')}
+                            ${issue.description || (isEnglish ? 'No description yet for this issue.' : 'Chưa có mô tả cho công việc này.')}
                         </div>
                         ${project ? `<p class="text-muted">${isEnglish ? 'Project' : 'Dự án'}: <strong>${project.name}</strong></p>` : ''}
                         <div class="issue-footer">
@@ -268,8 +303,8 @@
             const priority = document.getElementById('priorityFilter').value;
             const status = document.getElementById('statusFilter').value;
             const filtered = allIssues.filter(i => {
-                if (priority && i.priority !== priority) return false;
-                if (status && i.status !== status) return false;
+                if (priority && i.priorityCode !== priority) return false;
+                if (status && i.statusCode !== status) return false;
                 return true;
             });
             renderIssues(filtered);
@@ -278,31 +313,34 @@
         function openCreateModal() {
             document.getElementById('issueForm').reset();
             document.getElementById('issueId').value = '';
+            setVoiceStatus('');
+            stopSpeechRecognition();
             updateIssueOptions();
             UIUtils.showModal('issueModal');
         }
 
         async function editIssue(issueId) {
             try {
-                const issue = await IssueService.getById(issueId);
-                document.getElementById('issueId').value = issue.id;
+                const normalizedIssueId = normalizeIssueId(issueId);
+                const issue = await IssueService.getById(normalizedIssueId);
+                document.getElementById('issueId').value = normalizeIssueId(issue.id);
                 document.getElementById('title').value = issue.title;
                 document.getElementById('description').value = issue.description || '';
                 document.getElementById('projectId').value = issue.projectId || '';
                 updateIssueOptions();
-                document.getElementById('priority').value = issue.priority || 'Medium';
-                document.getElementById('status').value = issue.status || 'Open';
-                document.getElementById('issueModalTitle').textContent = I18nService.getLanguage() === 'en' ? 'Edit issue' : 'Chỉnh sửa issue';
+                document.getElementById('priority').value = issue.priorityCode || 'MEDIUM';
+                document.getElementById('status').value = issue.statusCode || 'TODO';
+                document.getElementById('issueModalTitle').textContent = I18nService.getLanguage() === 'en' ? 'Edit issue' : 'Chỉnh sửa công việc';
                 UIUtils.showModal('issueModal');
             } catch (error) {
-                UIUtils.showError(I18nService.getLanguage() === 'en' ? 'Error loading issue' : 'Lỗi khi tải issue');
+                UIUtils.showError(I18nService.getLanguage() === 'en' ? 'Error loading issue' : 'Lỗi khi tải công việc');
             }
         }
 
         async function handleSubmit(e) {
             e.preventDefault();
             const isEnglish = I18nService.getLanguage() === 'en';
-            const issueId = document.getElementById('issueId').value;
+            const issueId = normalizeIssueId(document.getElementById('issueId').value);
             const data = {
                 title: document.getElementById('title').value,
                 description: document.getElementById('description').value,
@@ -314,35 +352,152 @@
             try {
                 if (issueId) {
                     await IssueService.update(issueId, data);
-                    UIUtils.showSuccess(isEnglish ? 'Issue updated successfully' : 'Issue được cập nhật thành công');
+                    UIUtils.showSuccess(isEnglish ? 'Issue updated successfully' : 'Công việc đã được cập nhật thành công');
                 } else {
                     await IssueService.create(data);
-                    UIUtils.showSuccess(isEnglish ? 'Issue created successfully' : 'Issue được tạo thành công');
+                    UIUtils.showSuccess(isEnglish ? 'Issue created successfully' : 'Công việc đã được tạo thành công');
                 }
                 closeModal();
                 loadIssues();
             } catch (error) {
-                UIUtils.showError(isEnglish ? 'Error saving issue' : 'Lỗi khi lưu issue');
+                UIUtils.showError(isEnglish ? 'Error saving issue' : 'Lỗi khi lưu công việc');
                 console.error('Error:', error);
             }
         }
 
         async function deleteIssue(issueId) {
             const isEnglish = I18nService.getLanguage() === 'en';
-            if (confirm(isEnglish ? 'Are you sure you want to delete this issue?' : 'Bạn có chắc muốn xóa issue này?')) {
+            const normalizedIssueId = normalizeIssueId(issueId);
+            if (confirm(isEnglish ? 'Are you sure you want to delete this issue?' : 'Bạn có chắc muốn xóa công việc này?')) {
                 try {
-                    await IssueService.delete(issueId);
-                    UIUtils.showSuccess(isEnglish ? 'Issue deleted successfully' : 'Issue được xóa thành công');
+                    await IssueService.delete(normalizedIssueId);
+                    UIUtils.showSuccess(isEnglish ? 'Issue deleted successfully' : 'Công việc đã được xóa thành công');
                     loadIssues();
                 } catch (error) {
-                    UIUtils.showError(isEnglish ? 'Error deleting issue' : 'Lỗi khi xóa issue');
+                    UIUtils.showError(isEnglish ? 'Error deleting issue' : 'Lỗi khi xóa công việc');
                 }
             }
         }
 
         function closeModal() {
             UIUtils.hideModal('issueModal');
+            stopSpeechRecognition();
+            setVoiceStatus('');
         }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let speechRecognizer = null;
+        let activeVoiceTarget = null; // 'title' or 'description'
+
+        function setVoiceStatus(message, isError = false) {
+            const statusEl = document.getElementById('voiceStatus');
+            if (!statusEl) return;
+            statusEl.textContent = message;
+            statusEl.style.color = isError ? '#d32f2f' : '#555';
+        }
+
+        function initSpeechRecognition() {
+            if (!SpeechRecognition) {
+                setVoiceStatus(I18nService.getLanguage() === 'en'
+                    ? 'Speech recognition not supported in this browser.'
+                    : 'Trình duyệt không hỗ trợ nhận dạng giọng nói.');
+                return;
+            }
+
+            if (speechRecognizer) {
+                return;
+            }
+
+            speechRecognizer = new SpeechRecognition();
+            speechRecognizer.continuous = false;
+            speechRecognizer.interimResults = false;
+            speechRecognizer.maxAlternatives = 1;
+            speechRecognizer.lang = I18nService.getLanguage() === 'en' ? 'en-US' : 'vi-VN';
+
+            speechRecognizer.onstart = () => {
+                setVoiceStatus(I18nService.getLanguage() === 'en' ? 'Listening...' : 'Đang lắng nghe...');
+            };
+
+            speechRecognizer.onresult = (event) => {
+                const result = event.results[event.resultIndex] || event.results[0];
+                const transcript = result && result[0] ? result[0].transcript.trim() : '';
+                applyVoiceTranscript(activeVoiceTarget, transcript);
+                setVoiceStatus(I18nService.getLanguage() === 'en' ? 'Captured voice text.' : 'Đã ghi nhận nội dung giọng nói.');
+            };
+
+            speechRecognizer.onerror = (event) => {
+                setVoiceStatus(I18nService.getLanguage() === 'en' ? `Voice error: ${event.error}` : `Lỗi giọng nói: ${event.error}`, true);
+                stopSpeechRecognition();
+            };
+
+            speechRecognizer.onend = () => {
+                setVoiceStatus(I18nService.getLanguage() === 'en' ? 'Speech recognition stopped.' : 'Dừng nhận dạng giọng nói.');
+            };
+        }
+
+        function startSpeechRecognition(targetField) {
+            if (!SpeechRecognition) {
+                setVoiceStatus(I18nService.getLanguage() === 'en' ? 'Speech recognition unsupported.' : 'Chức năng giọng nói không khả dụng.', true);
+                return;
+            }
+            initSpeechRecognition();
+            if (!speechRecognizer) return;
+
+            activeVoiceTarget = targetField;
+            speechRecognizer.lang = I18nService.getLanguage() === 'en' ? 'en-US' : 'vi-VN';
+            try {
+                speechRecognizer.start();
+            } catch (error) {
+                // Ignore errors when calling start repeatedly.
+            }
+        }
+
+        function stopSpeechRecognition() {
+            if (speechRecognizer) {
+                try {
+                    speechRecognizer.stop();
+                } catch (e) {
+                    // ignore
+                }
+            }
+            activeVoiceTarget = null;
+        }
+
+        function getVoiceField(targetField) {
+            if (targetField === 'title') {
+                return document.getElementById('title');
+            }
+            if (targetField === 'description') {
+                return document.getElementById('description');
+            }
+            return null;
+        }
+
+        function applyVoiceTranscript(targetField, transcript) {
+            if (!transcript) {
+                return;
+            }
+
+            const field = getVoiceField(targetField);
+            if (!field) {
+                setVoiceStatus(I18nService.getLanguage() === 'en' ? 'Could not find the target field.' : 'Không tìm thấy ô cần điền.', true);
+                return;
+            }
+
+            const separator = targetField === 'description' && field.value.trim() ? '\n' : (field.value.trim() ? ' ' : '');
+            field.value = `${field.value}${separator}${transcript}`.trim();
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+            field.focus();
+
+            if (typeof field.setSelectionRange === 'function') {
+                const end = field.value.length;
+                field.setSelectionRange(end, end);
+            }
+        }
+
+        document.getElementById('voiceTitleBtn').addEventListener('click', () => startSpeechRecognition('title'));
+        document.getElementById('voiceDescBtn').addEventListener('click', () => startSpeechRecognition('description'));
 
         document.addEventListener('app:languageChanged', async () => {
             updateIssueOptions();

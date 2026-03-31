@@ -73,6 +73,10 @@ public class User {
 	@JsonIgnore
 	private List<Board> boards;
 
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+	@JsonIgnore
+	private List<ProjectMember> projectMembers;
+
 	@PrePersist
 	public void prePersist() {
 		if (id == null || id.isBlank()) {

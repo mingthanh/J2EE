@@ -45,6 +45,7 @@ public class AuthController {
 		response.put("avatarUrl", user.getAvatarUrl());
 		response.put("role", user.getRole());
 		response.put("token", "Bearer " + user.getId()); // Simple token (in production, use JWT)
+		response.put("user", user);
 
 		return ResponseEntity.ok(response);
 	}

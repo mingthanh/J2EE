@@ -1,17 +1,17 @@
 package phattrienungdungvoi2ee.DoAnMonHoc.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,43 +21,31 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "projects")
-public class Project {
+@Table(
+	name = "project_members",
+	uniqueConstraints = @UniqueConstraint(columnNames = {"project_id", "user_id"})
+)
+public class ProjectMember {
 
 	@Id
 	@Column(length = 36)
 	private String id;
 
-	@Column(length = 255)
-	private String name;
-
-	@Column(name = "`key`", length = 50)
-	private String key;
-
-	@Column(columnDefinition = "TEXT")
-	private String description;
-
-	@Column(nullable = false)
-	private Boolean active;
+	@ManyToOne
+	@JoinColumn(name = "project_id", nullable = false)
+	@JsonIgnore
+	private Project project;
 
 	@ManyToOne
-	@JoinColumn(name = "lead_id")
-	private User lead;
+	@JoinColumn(name = "user_id", nullable = false)
+	private User user;
+
+	@Enumerated(EnumType.STRING)
+	@Column(nullable = false, length = 20)
+	private ProjectMemberRole role;
 
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;
-
-	@OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
-	@JsonIgnore
-	private List<Issue> issues;
-
-	@OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
-	@JsonIgnore
-	private List<Sprint> sprints;
-
-	@OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
-	@JsonIgnore
-	private List<ProjectMember> members;
 
 	@PrePersist
 	public void prePersist() {
@@ -66,9 +54,6 @@ public class Project {
 		}
 		if (createdAt == null) {
 			createdAt = LocalDateTime.now();
-		}
-		if (active == null) {
-			active = true;
 		}
 	}
 }

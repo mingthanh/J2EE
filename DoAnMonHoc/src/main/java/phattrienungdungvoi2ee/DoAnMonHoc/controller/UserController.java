@@ -2,6 +2,7 @@ package phattrienungdungvoi2ee.DoAnMonHoc.controller;
 
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +27,7 @@ public class UserController {
 	}
 
 	@GetMapping
+	@PreAuthorize("@authorizationService.isSuperAdmin()")
 	public List<User> getAll() {
 		return userService.getAll();
 	}
@@ -36,6 +38,7 @@ public class UserController {
 	}
 
 	@GetMapping("/{id}")
+	@PreAuthorize("@authorizationService.isSuperAdmin() or @authorizationService.isCurrentUser(#id)")
 	public User getById(@PathVariable String id) {
 		return userService.getById(id);
 	}
@@ -46,11 +49,13 @@ public class UserController {
 	}
 
 	@PutMapping("/{id}")
+	@PreAuthorize("@authorizationService.isSuperAdmin() or @authorizationService.isCurrentUser(#id)")
 	public User update(@PathVariable String id, @RequestBody UserDTO dto) {
 		return userService.update(id, dto);
 	}
 
 	@DeleteMapping("/{id}")
+	@PreAuthorize("@authorizationService.isSuperAdmin()")
 	public void delete(@PathVariable String id) {
 		userService.delete(id);
 	}

@@ -3,36 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi Tiet Du An - Jolliebee</title>
+    <title>Chi tiet du an - Jolliebee</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body data-title-key="project_detail_title">
     <nav class="navbar">
         <div class="navbar-container">
             <a href="/dashboard" class="navbar-brand">Jolliebee</a>
             <ul class="navbar-menu">
-                <li><a href="/dashboard" class="navbar-link">Dashboard</a></li>
-                <li><a href="/projects" class="navbar-link active">Du an</a></li>
-                <li><a href="/issues" class="navbar-link">Issues</a></li>
-                <li><a href="/profile" class="navbar-link">Ho so</a></li>
+                <li><a href="/dashboard" class="navbar-link" data-i18n="nav_dashboard">Dashboard</a></li>
+                <li><a href="/projects" class="navbar-link active" data-i18n="nav_projects">Dự án</a></li>
+                <li><a href="/issues" class="navbar-link" data-i18n="nav_issues">Công việc</a></li>
+                <li><a href="/profile" class="navbar-link" data-i18n="nav_profile">Hồ sơ</a></li>
             </ul>
-            <div class="navbar-user">
-                <div class="user-avatar" id="userAvatar">A</div>
-                <button class="btn btn-outline btn-small" onclick="AuthService.logout()">Dang xuat</button>
+            <div class="navbar-actions">
+                <div class="language-switcher" aria-label="Language switcher">
+                    <button type="button" class="lang-btn" data-lang-btn="vi">VI</button>
+                    <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+                </div>
+                <div class="navbar-user">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <button class="btn btn-outline btn-small" onclick="AuthService.logout()" data-i18n="common_logout">Đăng xuất</button>
+                </div>
             </div>
         </div>
     </nav>
 
     <div class="main-content">
         <div class="container page-shell">
-            <a href="/projects" class="btn btn-outline btn-small">Quay lai danh sach</a>
+            <a href="/projects" class="btn btn-outline btn-small" data-i18n="project_detail_back">Quay lại danh sách</a>
 
             <section class="page-panel">
                 <div class="section-header">
                     <div>
-                        <div class="hero-badge">Chi tiet du an</div>
-                        <h1 class="section-title" id="projectName">Ten du an</h1>
-                        <p class="section-subtitle" id="projectDescription">Mo ta du an</p>
+                        <div class="hero-badge" data-i18n="project_detail_badge">Project board</div>
+                        <h1 class="section-title" id="projectName">Tên dự án</h1>
+                        <p class="section-subtitle" id="projectDescription">Mô tả dự án</p>
+                    </div>
+                    <div class="hero-actions">
+                        <a href="/issues" class="btn btn-primary btn-small" data-i18n="project_detail_create_issue">Tạo issue</a>
+                        <button class="btn btn-secondary btn-small" onclick="loadProjectScreen()" data-i18n="project_detail_refresh">Làm mới</button>
                     </div>
                 </div>
                 <div class="info-grid" id="projectInfo"></div>
@@ -41,82 +51,279 @@
             <section class="page-panel">
                 <div class="section-header">
                     <div>
-                        <h2 class="section-title">Issues cua du an</h2>
-                        <p class="section-subtitle">Danh sach issue lien quan den du an hien tai.</p>
+                        <h2 class="section-title" data-i18n="project_detail_members_title">Thành viên dự án</h2>
+                        <p class="section-subtitle" data-i18n="project_detail_members_copy">Thêm thành viên và gán role theo từng project.</p>
                     </div>
-                    <a href="/issues" class="btn btn-primary btn-small">Tao issue</a>
                 </div>
-                <div id="issuesList"></div>
+                <form class="toolbar-grid" onsubmit="handleAddMember(event)">
+                    <input type="text" id="memberIdentifier" class="form-control" data-i18n-placeholder="project_detail_member_placeholder" placeholder="Username hoặc email">
+                    <select id="memberRole" class="form-control">
+                        <option value="MEMBER">MEMBER</option>
+                        <option value="PM">PM</option>
+                        <option value="PROJECT_ADMIN">PROJECT_ADMIN</option>
+                        <option value="VIEWER">VIEWER</option>
+                    </select>
+                    <button class="btn btn-primary" type="submit" data-i18n="project_detail_add_member">Thêm thành viên</button>
+                </form>
+                <div id="membersList" class="issues-grid"></div>
+            </section>
+
+            <section class="page-panel">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title" data-i18n="project_detail_board_title">Board công việc</h2>
+                        <p class="section-subtitle" data-i18n="project_detail_board_copy">Kéo thả card giữa các cột để cập nhật tiến độ.</p>
+                    </div>
+                </div>
+                <div class="board-grid" id="boardGrid"></div>
             </section>
         </div>
     </div>
 
     <script src="/js/app.js"></script>
     <script>
-        const user = AuthService.getCurrentUser();
-        if (user) {
-            document.getElementById('userAvatar').textContent = (user.displayName || user.username).charAt(0).toUpperCase();
-        }
+        document.querySelectorAll('[data-lang-btn]').forEach((button) => {
+            button.addEventListener('click', () => I18nService.setLanguage(button.dataset.langBtn));
+        });
 
         const projectId = window.location.pathname.split('/')[2];
+        const BOARD_COLUMNS = [
+            { code: 'TODO', key: 'project_detail_drag_todo' },
+            { code: 'IN_PROGRESS', key: 'project_detail_drag_progress' },
+            { code: 'REVIEW', key: 'project_detail_drag_review' },
+            { code: 'DONE', key: 'project_detail_drag_done' }
+        ];
 
-        async function loadProjectDetail() {
-            try {
-                UIUtils.showLoading();
-                const project = await ProjectService.getById(projectId);
-                UIUtils.hideLoading();
+        let currentProject = null;
+        let currentIssues = [];
+        let currentMembers = [];
+        let currentUser = null;
 
-                document.getElementById('projectName').textContent = project.name;
-                document.getElementById('projectDescription').textContent = project.description || 'Khong co mo ta';
-
-                document.getElementById('projectInfo').innerHTML = `
-                    <div class="info-item">
-                        <span class="meta-label">Trang thai</span>
-                        <div class="info-value">
-                            <span class="badge ${project.active ? 'badge-success' : 'badge-warning'}">
-                                ${project.active ? 'Hoat dong' : 'Tam dung'}
-                            </span>
-                        </div>
-                    </div>
-                `;
-
-                const allIssues = await IssueService.getAll();
-                const projectIssues = allIssues.filter(i => i.projectId === projectId);
-
-                const issuesHtml = projectIssues.length > 0
-                    ? `
-                        <div class="table-shell">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Tieu de</th>
-                                        <th>Do uu tien</th>
-                                        <th>Trang thai</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${projectIssues.map(issue => `
-                                        <tr>
-                                            <td>${issue.title}</td>
-                                            <td><span class="badge badge-primary">${issue.priority || 'Medium'}</span></td>
-                                            <td>${issue.status || 'Open'}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    `
-                    : '<div class="empty-state"><p>Chua co issue trong du an nay.</p></div>';
-
-                document.getElementById('issuesList').innerHTML = issuesHtml;
-            } catch (error) {
-                UIUtils.hideLoading();
-                UIUtils.showError('Loi khi tai chi tiet du an');
-                console.error('Error:', error);
+        async function loadCurrentUser() {
+            const user = await AuthService.ensureCurrentUser();
+            if (user) {
+                currentUser = user;
+                UIUtils.renderAvatar(document.getElementById('userAvatar'), user);
+                renderMemberManagement();
+                renderMembers();
             }
         }
 
-        loadProjectDetail();
+        async function loadProjectScreen() {
+            try {
+                UIUtils.showLoading();
+                const [project, issues, members] = await Promise.all([
+                    ProjectService.getById(projectId),
+                    IssueService.getByProject(projectId),
+                    ProjectService.getMembers(projectId)
+                ]);
+                currentProject = project;
+                currentIssues = issues || [];
+                currentMembers = members || [];
+                renderProject();
+                renderMemberManagement();
+                renderMembers();
+                renderBoard();
+            } catch (error) {
+                UIUtils.showError(error.message || I18nService.t('project_detail_load_error'));
+            } finally {
+                UIUtils.hideLoading();
+            }
+        }
+
+        function renderProject() {
+            document.getElementById('projectName').textContent = currentProject.name || 'Untitled project';
+            document.getElementById('projectDescription').textContent = currentProject.description || I18nService.t('project_detail_empty_description');
+            document.getElementById('projectInfo').innerHTML = `
+                <div class="info-item">
+                    <span class="meta-label">${I18nService.t('project_detail_key')}</span>
+                    <div class="info-value">${currentProject.key || '-'}</div>
+                </div>
+                <div class="info-item">
+                    <span class="meta-label">${I18nService.t('project_detail_lead')}</span>
+                    <div class="info-value">${currentProject.lead?.displayName || currentProject.lead?.username || '-'}</div>
+                </div>
+                <div class="info-item">
+                    <span class="meta-label">${I18nService.t('project_detail_total_issues')}</span>
+                    <div class="info-value">${currentIssues.length}</div>
+                </div>
+                <div class="info-item">
+                    <span class="meta-label">${I18nService.t('project_detail_total_members')}</span>
+                    <div class="info-value">${currentMembers.length}</div>
+                </div>
+            `;
+        }
+
+        function renderMembers() {
+            const host = document.getElementById('membersList');
+            if (!currentMembers.length) {
+                host.innerHTML = `<div class="empty-state"><p>${I18nService.t('project_detail_empty_members')}</p></div>`;
+                return;
+            }
+
+            const creatorUsername = currentMembers[0]?.user?.username || null;
+            const isCreator = !!currentUser && !!creatorUsername && currentUser.username === creatorUsername;
+
+            host.innerHTML = currentMembers.map((member) => `
+                <article class="issue-card">
+                    <div class="card-kicker">${member.role}${member.user?.username === creatorUsername ? ` • ${I18nService.t('project_detail_creator_badge')}` : ''}</div>
+                    <h3>${member.user?.displayName || member.user?.username || I18nService.t('project_detail_unknown_user')}</h3>
+                    <div class="issue-description">${member.user?.email || '-'}</div>
+                    ${renderMemberActions(member, isCreator)}
+                </article>
+            `).join('');
+        }
+
+        function renderMemberActions(member, isCreator) {
+            if (!currentUser) {
+                return '';
+            }
+
+            const isCurrentUserCard = member.user?.id === currentUser.id;
+            const creatorUserId = currentMembers[0]?.user?.id || null;
+            const canKick = isCreator && member.user?.id && member.user.id !== creatorUserId;
+            const canLeave = !isCreator && isCurrentUserCard;
+
+            if (!canKick && !canLeave) {
+                return '';
+            }
+
+            const displayName = member.user?.displayName || member.user?.username || I18nService.t('project_detail_unknown_user');
+            return `
+                <div class="action-links">
+                    ${canKick ? `<button type="button" class="action-link delete" onclick="handleRemoveMember('${member.user.id}', '${escapeForJs(displayName)}')">${I18nService.t('project_detail_remove_member')}</button>` : ''}
+                    ${canLeave ? `<button type="button" class="action-link delete" onclick="handleLeaveProject()">${I18nService.t('project_detail_leave_project')}</button>` : ''}
+                </div>
+            `;
+        }
+
+        function renderMemberManagement() {
+            const form = document.querySelector('form.toolbar-grid[onsubmit="handleAddMember(event)"]');
+            if (!form) {
+                return;
+            }
+
+            const creatorUsername = currentMembers[0]?.user?.username || null;
+            const isCreator = !!currentUser && !!creatorUsername && currentUser.username === creatorUsername;
+            form.style.display = isCreator ? 'grid' : 'none';
+        }
+
+        function escapeForJs(value) {
+            return String(value || '')
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'");
+        }
+
+        function renderBoard() {
+            const host = document.getElementById('boardGrid');
+            host.innerHTML = BOARD_COLUMNS.map((column) => {
+                const issues = currentIssues.filter((issue) => issue.statusCode === column.code);
+                return `
+                    <section class="board-column" data-status="${column.code}" ondragover="allowDrop(event)" ondrop="handleDrop(event, '${column.code}')">
+                        <header class="board-column-header">
+                            <strong>${I18nService.t(column.key)}</strong>
+                            <span>${issues.length}</span>
+                        </header>
+                        <div class="board-column-body">
+                            ${issues.map((issue) => `
+                                <article class="board-card" draggable="true" ondragstart="handleDragStart(event, '${issue.id}')">
+                                    <div class="card-kicker">${issue.issueKey || 'ISSUE'}</div>
+                                    <h3>${issue.title || issue.summary || 'Untitled issue'}</h3>
+                                    <div class="issue-description">${issue.description || I18nService.t('project_detail_empty_description')}</div>
+                                    <div class="issue-footer">
+                                        <small>${issue.assigneeName || I18nService.t('project_detail_no_assignee')}</small>
+                                        <a class="action-link" href="/issue/${issue.id}">${I18nService.t('project_detail_view_issue')}</a>
+                                    </div>
+                                </article>
+                            `).join('') || `<div class="empty-state compact"><p>${I18nService.t('project_detail_empty_issues')}</p></div>`}
+                        </div>
+                    </section>
+                `;
+            }).join('');
+        }
+
+        function handleDragStart(event, issueId) {
+            event.dataTransfer.setData('text/plain', issueId);
+        }
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        async function handleDrop(event, targetStatus) {
+            event.preventDefault();
+            const issueId = event.dataTransfer.getData('text/plain');
+            if (!issueId) {
+                return;
+            }
+
+            try {
+                await IssueService.update(issueId, { status: targetStatus });
+                UIUtils.showSuccess(I18nService.t('project_detail_update_status_success'));
+                await loadProjectScreen();
+            } catch (error) {
+                UIUtils.showError(error.message || I18nService.t('project_detail_update_status_error'));
+            }
+        }
+
+        async function handleAddMember(event) {
+            event.preventDefault();
+            const identifier = document.getElementById('memberIdentifier').value.trim();
+            const role = document.getElementById('memberRole').value;
+            const creatorUsername = currentMembers[0]?.user?.username || null;
+            if (!currentUser || currentUser.username !== creatorUsername) {
+                UIUtils.showError(I18nService.t('project_detail_manage_members_only_creator'));
+                return;
+            }
+            if (!identifier) {
+                UIUtils.showError(I18nService.t('project_detail_member_required'));
+                return;
+            }
+
+            try {
+                await ProjectService.addMember(projectId, identifier, role);
+                document.getElementById('memberIdentifier').value = '';
+                UIUtils.showSuccess(I18nService.t('project_detail_add_member_success'));
+                await loadProjectScreen();
+            } catch (error) {
+                UIUtils.showError(error.message || I18nService.t('project_detail_add_member_error'));
+            }
+        }
+
+        async function handleRemoveMember(userId, displayName) {
+            if (!confirm(`${I18nService.t('project_detail_confirm_remove_member')}\n${displayName}`)) {
+                return;
+            }
+
+            try {
+                await ProjectService.removeMember(projectId, userId);
+                UIUtils.showSuccess(I18nService.t('project_detail_remove_member_success'));
+                await loadProjectScreen();
+            } catch (error) {
+                UIUtils.showError(error.message || I18nService.t('project_detail_remove_member_error'));
+            }
+        }
+
+        async function handleLeaveProject() {
+            if (!confirm(I18nService.t('project_detail_confirm_leave_project'))) {
+                return;
+            }
+
+            try {
+                await ProjectService.leaveProject(projectId);
+                UIUtils.showSuccess(I18nService.t('project_detail_leave_project_success'));
+                window.location.href = '/projects';
+            } catch (error) {
+                UIUtils.showError(error.message || I18nService.t('project_detail_leave_project_error'));
+            }
+        }
+
+        document.addEventListener('app:languageChanged', () => {
+            loadProjectScreen();
+        });
+
+        loadCurrentUser();
+        loadProjectScreen();
     </script>
 </body>
 </html>

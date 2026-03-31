@@ -59,6 +59,9 @@ public class UserServiceImpl implements UserService {
 	}
 
 	private void applyDto(User user, UserDTO dto) {
+		if (dto.getEmail() != null) {
+			validateUniqueEmail(dto.getEmail(), user.getId());
+		}
 		if (dto.getUsername() != null) {
 			user.setUsername(dto.getUsername());
 		}
@@ -75,10 +78,31 @@ public class UserServiceImpl implements UserService {
 			user.setAvatarUrl(dto.getAvatarUrl());
 		}
 		if (dto.getRole() != null) {
-			user.setRole(dto.getRole());
+			user.setRole(normalizeGlobalRole(dto.getRole()));
 		}
 		if (dto.getActive() != null) {
 			user.setActive(dto.getActive());
 		}
+	}
+
+	private void validateUniqueEmail(String email, String currentUserId) {
+		boolean exists = currentUserId == null || currentUserId.isBlank()
+			? userRepository.existsByEmail(email)
+			: userRepository.existsByEmailAndIdNot(email, currentUserId);
+		if (exists) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already exists");
+		}
+	}
+
+	private String normalizeGlobalRole(String rawRole) {
+		if (rawRole == null || rawRole.isBlank()) {
+			return null;
+		}
+
+		String normalized = rawRole.trim().toUpperCase();
+		if (!"SUPER_ADMIN".equals(normalized)) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only SUPER_ADMIN is supported as a global role");
+		}
+		return normalized;
 	}
 }

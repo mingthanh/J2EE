@@ -1,6 +1,7 @@
 package phattrienungdungvoi2ee.DoAnMonHoc.controller;
 
 import java.util.List;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,11 +23,13 @@ public class CommentController {
 	}
 
 	@GetMapping("/{issueId}/comments")
+	@PreAuthorize("isAuthenticated()")
 	public List<Comment> getByIssue(@PathVariable String issueId) {
 		return commentService.getByIssue(issueId);
 	}
 
 	@PostMapping("/{issueId}/comments")
+	@PreAuthorize("isAuthenticated()")
 	public Comment addComment(@PathVariable String issueId, @RequestBody CommentDTO dto) {
 		dto.setIssueId(issueId);
 		return commentService.addComment(dto);

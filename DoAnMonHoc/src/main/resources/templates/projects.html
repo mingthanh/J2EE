@@ -107,6 +107,17 @@
                         <textarea id="description" name="description" class="form-control"></textarea>
                     </div>
                     <div class="form-group">
+                        <label for="partnersInput" id="partnersLabel">Partner thực hiện</label>
+                        <textarea
+                            id="partnersInput"
+                            name="partnersInput"
+                            class="form-control"
+                            rows="3"
+                            placeholder="Nhập username hoặc email, mỗi người một dòng"
+                        ></textarea>
+                        <small id="partnersHint">Có thể nhập nhiều partner bằng cách xuống dòng hoặc dùng dấu phẩy.</small>
+                    </div>
+                    <div class="form-group">
                         <label for="active">
                             <input type="checkbox" id="active" name="active" checked>
                             <span id="activeLabel">Kích hoạt dự án</span>
@@ -146,13 +157,39 @@
 
         function updateProjectPageTexts() {
             document.getElementById('activeLabel').textContent = I18nService.getLanguage() === 'en' ? 'Activate project' : 'Kích hoạt dự án';
+            document.getElementById('partnersLabel').textContent = I18nService.getLanguage() === 'en' ? 'Project partners' : 'Partner thực hiện';
+            document.getElementById('partnersHint').textContent = I18nService.getLanguage() === 'en'
+                ? 'Enter username or email. Use one per line or separate by commas.'
+                : 'Nhập username hoặc email. Mỗi người một dòng hoặc ngăn cách bằng dấu phẩy.';
+            document.getElementById('partnersInput').setAttribute(
+                'placeholder',
+                I18nService.getLanguage() === 'en'
+                    ? 'Enter username or email, one per line'
+                    : 'Nhập username hoặc email, mỗi người một dòng'
+            );
             updateNavbarDropdownTexts();
+        }
+
+        function parsePartnersInput() {
+            return [...new Set(
+                document.getElementById('partnersInput').value
+                    .split(/[\n,]/)
+                    .map(value => value.trim())
+                    .filter(Boolean)
+            )];
+        }
+
+        async function addPartnersToProject(projectId, identifiers) {
+            for (const identifier of identifiers) {
+                await ProjectService.addMember(projectId, identifier);
+            }
         }
 
         async function loadProjects() {
             try {
                 UIUtils.showLoading();
                 allProjects = await ProjectService.getAll();
+                QuickSearchService.invalidate();
                 UIUtils.hideLoading();
                 renderProjects(allProjects);
                 updateProjectPageTexts();
@@ -214,6 +251,7 @@
         function openCreateModal() {
             document.getElementById('projectForm').reset();
             document.getElementById('projectId').value = '';
+            document.getElementById('partnersInput').value = '';
             document.querySelector('.modal-title').textContent = I18nService.t('modal_create_project');
             UIUtils.showModal('projectModal');
             updateProjectPageTexts();
@@ -226,6 +264,7 @@
                 document.getElementById('name').value = project.name;
                 document.getElementById('description').value = project.description || '';
                 document.getElementById('active').checked = project.active;
+                document.getElementById('partnersInput').value = '';
                 document.querySelector('.modal-title').textContent = I18nService.getLanguage() === 'en' ? 'Edit project' : 'Chỉnh sửa dự án';
                 UIUtils.showModal('projectModal');
                 updateProjectPageTexts();
@@ -239,6 +278,7 @@
             const isEnglish = I18nService.getLanguage() === 'en';
 
             const projectId = document.getElementById('projectId').value;
+            const partnerIdentifiers = parsePartnersInput();
             const data = {
                 name: document.getElementById('name').value,
                 description: document.getElementById('description').value,
@@ -246,18 +286,25 @@
             };
 
             try {
+                let savedProject;
                 if (projectId) {
-                    await ProjectService.update(projectId, data);
+                    savedProject = await ProjectService.update(projectId, data);
+                    if (partnerIdentifiers.length > 0) {
+                        await addPartnersToProject(projectId, partnerIdentifiers);
+                    }
                     UIUtils.showSuccess(isEnglish ? 'Project updated successfully' : 'Dự án được cập nhật thành công');
                 } else {
-                    await ProjectService.create(data);
+                    savedProject = await ProjectService.create(data);
+                    if (partnerIdentifiers.length > 0) {
+                        await addPartnersToProject(savedProject.id, partnerIdentifiers);
+                    }
                     UIUtils.showSuccess(isEnglish ? 'Project created successfully' : 'Dự án được tạo thành công');
                 }
 
                 closeModal();
                 loadProjects();
             } catch (error) {
-                UIUtils.showError(isEnglish ? 'Error saving project' : 'Lỗi khi lưu dự án');
+                UIUtils.showError(error.message || (isEnglish ? 'Error saving project' : 'Lỗi khi lưu dự án'));
                 console.error('Error:', error);
             }
         }
@@ -270,7 +317,7 @@
                     UIUtils.showSuccess(isEnglish ? 'Project deleted successfully' : 'Dự án được xóa thành công');
                     loadProjects();
                 } catch (error) {
-                    UIUtils.showError(isEnglish ? 'Error deleting project' : 'Lỗi khi xóa dự án');
+                    UIUtils.showError(error.message || (isEnglish ? 'Error deleting project' : 'Lỗi khi xóa dự án'));
                 }
             }
         }

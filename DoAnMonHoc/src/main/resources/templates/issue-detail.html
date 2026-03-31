@@ -3,91 +3,209 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chi Tiet Issue - Jolliebee</title>
+    <title>Chi tiet issue - Jolliebee</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body data-title-key="issue_detail_title">
     <nav class="navbar">
         <div class="navbar-container">
             <a href="/dashboard" class="navbar-brand">Jolliebee</a>
             <ul class="navbar-menu">
-                <li><a href="/dashboard" class="navbar-link">Dashboard</a></li>
-                <li><a href="/projects" class="navbar-link">Du an</a></li>
-                <li><a href="/issues" class="navbar-link active">Issues</a></li>
-                <li><a href="/profile" class="navbar-link">Ho so</a></li>
+                <li><a href="/dashboard" class="navbar-link" data-i18n="nav_dashboard">Dashboard</a></li>
+                <li><a href="/projects" class="navbar-link" data-i18n="nav_projects">Dự án</a></li>
+                <li><a href="/issues" class="navbar-link active" data-i18n="nav_issues">Công việc</a></li>
+                <li><a href="/profile" class="navbar-link" data-i18n="nav_profile">Hồ sơ</a></li>
             </ul>
-            <div class="navbar-user">
-                <div class="user-avatar" id="userAvatar">A</div>
-                <button class="btn btn-outline btn-small" onclick="AuthService.logout()">Dang xuat</button>
+            <div class="navbar-actions">
+                <div class="language-switcher" aria-label="Language switcher">
+                    <button type="button" class="lang-btn" data-lang-btn="vi">VI</button>
+                    <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+                </div>
+                <div class="navbar-user">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <button class="btn btn-outline btn-small" onclick="AuthService.logout()" data-i18n="common_logout">Đăng xuất</button>
+                </div>
             </div>
         </div>
     </nav>
 
     <div class="main-content">
         <div class="container page-shell">
-            <a href="/issues" class="btn btn-outline btn-small">Quay lai issues</a>
+            <a href="/issues" class="btn btn-outline btn-small" data-i18n="issue_detail_back">Quay lại issues</a>
 
             <section class="page-panel">
                 <div class="section-header">
                     <div>
-                        <div class="hero-badge">Chi tiet issue</div>
-                        <h1 class="section-title" id="issueTitle">Tieu de issue</h1>
-                        <p class="section-subtitle" id="issueDescription">Mo ta issue</p>
+                        <div class="hero-badge" data-i18n="issue_detail_badge">Chi tiết issue</div>
+                        <h1 class="section-title" id="issueTitle">Tiêu đề issue</h1>
+                        <p class="section-subtitle" id="issueDescription">Mô tả issue</p>
                     </div>
-                    <div class="section-actions">
-                        <button class="btn btn-secondary" onclick="window.history.back()">Quay lai</button>
-                        <button class="btn btn-outline" onclick="editIssue()">Chinh sua</button>
+                    <div class="hero-actions">
+                        <a id="projectLink" class="btn btn-secondary btn-small" href="/projects" data-i18n="issue_detail_open_project">Mở project</a>
                     </div>
                 </div>
                 <div class="info-grid" id="issueInfo"></div>
+            </section>
+
+            <section class="page-panel">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title" data-i18n="issue_detail_assign_title">Phân công công việc</h2>
+                        <p class="section-subtitle" data-i18n="issue_detail_assign_copy">Gán issue cho thành viên trong project.</p>
+                    </div>
+                </div>
+                <form class="toolbar-grid" onsubmit="handleAssign(event)">
+                    <select id="assigneeSelect" class="form-control"></select>
+                    <button class="btn btn-primary" type="submit" data-i18n="issue_detail_assign_button">Cập nhật assignee</button>
+                </form>
+            </section>
+
+            <section class="page-panel">
+                <div class="section-header">
+                    <div>
+                        <h2 class="section-title" data-i18n="issue_detail_comment_title">Bình luận</h2>
+                        <p class="section-subtitle" data-i18n="issue_detail_comment_copy">Trao đổi nhanh ngay trên issue.</p>
+                    </div>
+                </div>
+                <form onsubmit="handleComment(event)">
+                    <div class="form-group">
+                        <textarea id="commentContent" class="form-control" rows="4" data-i18n-placeholder="issue_detail_comment_placeholder" placeholder="Nhập nội dung bình luận"></textarea>
+                    </div>
+                    <button class="btn btn-primary" type="submit" data-i18n="issue_detail_comment_submit">Gửi comment</button>
+                </form>
+                <div id="commentsList" class="mt-4"></div>
             </section>
         </div>
     </div>
 
     <script src="/js/app.js"></script>
     <script>
-        const user = AuthService.getCurrentUser();
-        if (user) {
-            document.getElementById('userAvatar').textContent = (user.displayName || user.username).charAt(0).toUpperCase();
-        }
+        document.querySelectorAll('[data-lang-btn]').forEach((button) => {
+            button.addEventListener('click', () => I18nService.setLanguage(button.dataset.langBtn));
+        });
 
         const issueId = window.location.pathname.split('/')[2];
+        let currentIssue = null;
+        let currentMembers = [];
 
-        async function loadIssueDetail() {
-            try {
-                UIUtils.showLoading();
-                const issue = await IssueService.getById(issueId);
-                UIUtils.hideLoading();
-
-                document.getElementById('issueTitle').textContent = issue.title;
-                document.getElementById('issueDescription').textContent = issue.description || 'Khong co mo ta';
-
-                document.getElementById('issueInfo').innerHTML = `
-                    <div class="info-item">
-                        <span class="meta-label">Do uu tien</span>
-                        <div class="info-value"><span class="badge badge-primary">${issue.priority || 'Medium'}</span></div>
-                    </div>
-                    <div class="info-item">
-                        <span class="meta-label">Trang thai</span>
-                        <div class="info-value"><span class="badge badge-info">${issue.status || 'Open'}</span></div>
-                    </div>
-                    <div class="info-item">
-                        <span class="meta-label">Ngay tao</span>
-                        <div class="info-value">${UIUtils.formatDate(issue.createdAt || new Date())}</div>
-                    </div>
-                `;
-            } catch (error) {
-                UIUtils.hideLoading();
-                UIUtils.showError('Loi khi tai chi tiet issue');
-                console.error('Error:', error);
+        async function loadCurrentUser() {
+            const user = await AuthService.ensureCurrentUser();
+            if (user) {
+                UIUtils.renderAvatar(document.getElementById('userAvatar'), user);
             }
         }
 
-        function editIssue() {
-            window.location.href = '/issues';
+        async function loadIssueScreen() {
+            try {
+                UIUtils.showLoading();
+                currentIssue = await IssueService.getById(issueId);
+                if (currentIssue.projectId) {
+                    currentMembers = await ProjectService.getMembers(currentIssue.projectId);
+                }
+                renderIssue();
+                renderAssigneeOptions();
+                await loadComments();
+            } catch (error) {
+                UIUtils.showError(error.message || I18nService.t('issue_detail_load_error'));
+            } finally {
+                UIUtils.hideLoading();
+            }
         }
 
-        loadIssueDetail();
+        function renderIssue() {
+            document.getElementById('issueTitle').textContent = currentIssue.title || currentIssue.summary || 'Untitled issue';
+            document.getElementById('issueDescription').textContent = currentIssue.description || I18nService.t('issue_detail_empty_description');
+            document.getElementById('projectLink').href = currentIssue.projectId ? `/project/${currentIssue.projectId}` : '/projects';
+            document.getElementById('projectLink').textContent = currentIssue.projectName || I18nService.t('issue_detail_open_project');
+            document.getElementById('issueInfo').innerHTML = `
+                <div class="info-item">
+                    <span class="meta-label">${I18nService.t('issue_detail_key')}</span>
+                    <div class="info-value">${currentIssue.issueKey || '-'}</div>
+                </div>
+                <div class="info-item">
+                    <span class="meta-label">${I18nService.t('issue_detail_status')}</span>
+                    <div class="info-value">${currentIssue.status || '-'}</div>
+                </div>
+                <div class="info-item">
+                    <span class="meta-label">${I18nService.t('issue_detail_priority')}</span>
+                    <div class="info-value">${currentIssue.priority || '-'}</div>
+                </div>
+                <div class="info-item">
+                    <span class="meta-label">${I18nService.t('issue_detail_assignee')}</span>
+                    <div class="info-value">${currentIssue.assigneeName || I18nService.t('issue_detail_no_assignee')}</div>
+                </div>
+            `;
+        }
+
+        function renderAssigneeOptions() {
+            const select = document.getElementById('assigneeSelect');
+            select.innerHTML = `<option value="">${I18nService.t('issue_detail_select_member')}</option>` + currentMembers.map((member) => `
+                <option value="${member.user?.id}" ${member.user?.id === currentIssue.assigneeId ? 'selected' : ''}>
+                    ${member.user?.displayName || member.user?.username} (${member.role})
+                </option>
+            `).join('');
+        }
+
+        async function handleAssign(event) {
+            event.preventDefault();
+            const userId = document.getElementById('assigneeSelect').value;
+            if (!userId) {
+                UIUtils.showError(I18nService.t('issue_detail_assign_required'));
+                return;
+            }
+
+            try {
+                await IssueService.assign(issueId, userId);
+                UIUtils.showSuccess(I18nService.t('issue_detail_assign_success'));
+                await loadIssueScreen();
+            } catch (error) {
+                UIUtils.showError(error.message || I18nService.t('issue_detail_assign_error'));
+            }
+        }
+
+        async function loadComments() {
+            const comments = await CommentService.getByIssue(issueId);
+            const host = document.getElementById('commentsList');
+            if (!comments.length) {
+                host.innerHTML = `<div class="empty-state"><p>${I18nService.t('issue_detail_empty_comments')}</p></div>`;
+                return;
+            }
+
+            host.innerHTML = comments.map((comment) => `
+                <article class="issue-card">
+                    <div class="card-kicker">${comment.user?.displayName || comment.user?.username || I18nService.t('issue_detail_unknown_user')}</div>
+                    <div class="issue-description">${comment.content || ''}</div>
+                    <div class="issue-footer">
+                        <small>${UIUtils.formatDate(comment.createdAt)} ${UIUtils.formatTime(comment.createdAt)}</small>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        async function handleComment(event) {
+            event.preventDefault();
+            const content = document.getElementById('commentContent').value.trim();
+            if (!content) {
+                UIUtils.showError(I18nService.t('issue_detail_comment_required'));
+                return;
+            }
+
+            try {
+                await CommentService.create(issueId, { content });
+                document.getElementById('commentContent').value = '';
+                UIUtils.showSuccess(I18nService.t('issue_detail_comment_success'));
+                await loadComments();
+            } catch (error) {
+                UIUtils.showError(error.message || I18nService.t('issue_detail_comment_error'));
+            }
+        }
+
+        document.addEventListener('app:languageChanged', () => {
+            loadIssueScreen();
+        });
+
+        loadCurrentUser();
+        loadIssueScreen();
     </script>
 </body>
 </html>

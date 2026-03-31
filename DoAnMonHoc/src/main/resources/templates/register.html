@@ -7,25 +7,25 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body data-title-key="register_title">
-    <main class="auth-layout">
+    <main class="auth-layout auth-layout-register">
         <section class="auth-showcase">
-            <h1 class="hero-title" data-i18n="register_hero_title">Bắt đầu quản lý dự án với quy trình gọn gàng và dễ theo dõi hơn.</h1>
+            <h1 class="hero-title" data-i18n="register_hero_title">Jolliebee</h1>
             <p class="hero-copy" data-i18n="register_hero_copy">
-                Biểu mẫu đăng ký được tối giản để người dùng mới vào là hiểu ngay. Các trường thông tin rõ ràng, khoảng trắng thoáng và giao diện đồng bộ với toàn bộ hệ thống.
+                Bắt đầu với tài khoản mới để quản lý dự án, issue và tiến độ công việc trong cùng một không gian trực quan.
             </p>
 
             <div class="hero-metrics">
                 <div class="metric-pill">
-                    <span>01</span>
+                    <span data-i18n="register_step_label_1">Đang xử lý</span>
                     <strong data-i18n="register_step_1">Tạo tài khoản</strong>
                 </div>
                 <div class="metric-pill">
-                    <span>02</span>
-                    <strong data-i18n="register_step_2">Tạo dự án</strong>
+                    <span data-i18n="register_step_label_2">Xem tất cả</span>
+                    <strong data-i18n="register_step_2">Dễ sử dụng</strong>
                 </div>
                 <div class="metric-pill">
-                    <span>03</span>
-                    <strong data-i18n="register_step_3">Theo dõi issue</strong>
+                    <span data-i18n="register_step_label_3">Hồ sơ</span>
+                    <strong data-i18n="register_step_3">Cho nhóm</strong>
                 </div>
             </div>
 
@@ -33,27 +33,30 @@
                 <div class="visual-panel primary">
                     <div class="device-header">
                         <div>
-                            <div class="card-kicker">Onboarding</div>
-                            <strong>Jolliebee</strong>
+                            <div class="card-kicker" data-i18n="register_visual_kicker">Onboarding</div>
+                            <strong data-i18n="register_visual_title">Jolliebee Workspace</strong>
                         </div>
                         <div class="dots"><span></span><span></span><span></span></div>
                     </div>
+                    <div class="chart-block"></div>
                     <div class="device-lines">
                         <div class="device-line"></div>
                         <div class="device-line medium"></div>
                         <div class="device-line short"></div>
                     </div>
-                    <div class="chart-block mt-3"></div>
                 </div>
                 <div class="visual-panel secondary">
-                    <span class="panel-chip">Secure</span>
-                    <div class="device-lines mt-2">
+                    <div class="panel-row">
+                        <div class="device-avatar"></div>
+                        <span class="panel-chip" data-i18n="register_visual_chip">Secure</span>
+                    </div>
+                    <div class="device-lines">
                         <div class="device-line medium"></div>
                         <div class="device-line short"></div>
                     </div>
                 </div>
                 <div class="visual-panel tertiary">
-                    <span class="panel-chip">Ready</span>
+                    <span class="panel-chip" data-i18n="register_visual_ready">Ready</span>
                     <div class="chart-block mt-2"></div>
                 </div>
             </div>
@@ -62,9 +65,11 @@
         <section class="auth-box">
             <div class="auth-topbar">
                 <div class="auth-brand">Jolliebee</div>
-                <div class="language-switcher" aria-label="Language switcher">
-                    <button type="button" class="lang-btn" data-lang-btn="vi">VI</button>
-                    <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+                <div class="auth-topbar-actions">
+                    <div class="language-switcher" aria-label="Language switcher">
+                        <button type="button" class="lang-btn" data-lang-btn="vi">VI</button>
+                        <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+                    </div>
                 </div>
             </div>
 

@@ -12,4 +12,5 @@ public class ProjectDTO {
 	private String key;
 	private String description;
 	private String leadId;
+	private Boolean active;
 }

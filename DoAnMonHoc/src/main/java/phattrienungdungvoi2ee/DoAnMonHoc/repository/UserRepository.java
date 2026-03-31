@@ -6,4 +6,7 @@ import phattrienungdungvoi2ee.DoAnMonHoc.entity.User;
 
 public interface UserRepository extends JpaRepository<User, String> {
 	Optional<User> findByUsername(String username);
+	Optional<User> findByEmail(String email);
+	boolean existsByEmail(String email);
+	boolean existsByEmailAndIdNot(String email, String id);
 }

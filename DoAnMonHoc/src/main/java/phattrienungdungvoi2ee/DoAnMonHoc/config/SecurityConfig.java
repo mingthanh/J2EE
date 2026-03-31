@@ -17,6 +17,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 import phattrienungdungvoi2ee.DoAnMonHoc.repository.UserRepository;
+import phattrienungdungvoi2ee.DoAnMonHoc.config.OAuth2SuccessHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -24,9 +25,11 @@ import phattrienungdungvoi2ee.DoAnMonHoc.repository.UserRepository;
 public class SecurityConfig {
 
 	private final UserRepository userRepository;
+	private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
-	public SecurityConfig(UserRepository userRepository) {
+	public SecurityConfig(UserRepository userRepository, OAuth2SuccessHandler oAuth2SuccessHandler) {
 		this.userRepository = userRepository;
+		this.oAuth2SuccessHandler = oAuth2SuccessHandler;
 	}
 
 	@Bean
@@ -41,7 +44,9 @@ public class SecurityConfig {
 			.map(user -> new org.springframework.security.core.userdetails.User(
 				user.getUsername(),
 				user.getPassword(),
-				List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole()))
+				user.getRole() == null || user.getRole().isBlank()
+					? List.of()
+					: List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().trim().toUpperCase()))
 			))
 			.orElseThrow(() -> new org.springframework.security.core.userdetails.UsernameNotFoundException(
 				"User not found: " + username
@@ -65,6 +70,12 @@ public class SecurityConfig {
 				.loginProcessingUrl("/login")
 				.defaultSuccessUrl("/dashboard", true)
 				.failureUrl("/login?error")
+				.permitAll()
+			)
+			.oauth2Login(oauth2 -> oauth2
+				.loginPage("/login")
+				.defaultSuccessUrl("/dashboard", true)
+				.successHandler(oAuth2SuccessHandler)
 				.permitAll()
 			)
 			.logout(logout -> logout
