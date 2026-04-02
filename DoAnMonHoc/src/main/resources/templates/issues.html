@@ -45,13 +45,13 @@
     <div class="main-content">
         <div class="container page-shell">
             <section class="page-hero">
-                <div class="section-header">
+                <div class="section-header issues-hero-header">
                     <div>
                         <div class="hero-badge" data-i18n="issues_badge">Theo dõi công việc</div>
                         <h1 class="page-title" data-i18n="issues_hero_title">Theo dõi công việc theo mức ưu tiên và trạng thái một cách dễ nhìn.</h1>
                         <p class="page-subtitle" data-i18n="issues_hero_copy">Bộ lọc, tìm kiếm và bố cục thẻ được sắp xếp lại để người dùng thao tác nhanh hơn trên cả máy tính và điện thoại.</p>
                     </div>
-                    <div class="hero-actions">
+                    <div class="hero-actions issues-hero-actions">
                         <button class="btn btn-primary" onclick="openCreateModal()" data-i18n="issues_create">Tạo công việc</button>
                         <button class="btn btn-secondary" onclick="loadIssues()" data-i18n="common_refresh">Làm mới</button>
                     </div>
@@ -75,7 +75,7 @@
     </div>
 
     <div class="modal" id="issueModal">
-        <div class="modal-content">
+        <div class="modal-content issue-modal-scroll">
             <div class="modal-header">
                 <h2 class="modal-title" id="issueModalTitle">Tạo công việc mới</h2>
                 <button class="close-btn" onclick="closeModal()">&times;</button>
@@ -100,7 +100,12 @@
                     </div>
                     <div class="form-group">
                         <label for="projectId" id="labelProject">Dự án</label>
-                        <select id="projectId" name="projectId" class="form-control" required></select>
+                        <select id="projectId" name="projectId" class="form-control" required onchange="handleProjectChange()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="assigneeId" id="labelAssignee">Người thực hiện</label>
+                        <div id="assigneeChecklist" class="assignee-checklist"></div>
+                        <small id="assigneeHint">Tick một hoặc nhiều thành viên để cùng thực hiện.</small>
                     </div>
                     <div class="detail-grid">
                         <div class="form-group">
@@ -138,6 +143,7 @@
 
         let allIssues = [];
         let allProjects = [];
+        let currentProjectMembers = [];
         const PRIORITY_OPTIONS = [
             { value: 'LOW', labelKey: 'issue_priority_low' },
             { value: 'MEDIUM', labelKey: 'issue_priority_medium' },
@@ -193,12 +199,66 @@
             document.getElementById('labelTitle').textContent = I18nService.getLanguage() === 'en' ? 'Title' : 'Tiêu đề';
             document.getElementById('labelDescription').textContent = I18nService.getLanguage() === 'en' ? 'Description' : 'Mô tả';
             document.getElementById('labelProject').textContent = I18nService.getLanguage() === 'en' ? 'Project' : 'Dự án';
+            document.getElementById('labelAssignee').textContent = I18nService.t('issue_detail_assignee');
+            document.getElementById('assigneeHint').textContent = I18nService.t('issues_assignee_multi_hint');
             document.getElementById('labelPriority').textContent = I18nService.getLanguage() === 'en' ? 'Priority' : 'Độ ưu tiên';
             document.getElementById('labelStatus').textContent = I18nService.getLanguage() === 'en' ? 'Status' : 'Trạng thái';
             document.getElementById('issueModalTitle').textContent = document.getElementById('issueId').value
                 ? (I18nService.getLanguage() === 'en' ? 'Edit issue' : 'Chỉnh sửa công việc')
                 : (I18nService.getLanguage() === 'en' ? 'Create issue' : 'Tạo công việc mới');
             updateNavbarDropdownTexts();
+        }
+
+        function getMemberDisplayLabel(member) {
+            const baseName = member.user?.displayName || member.user?.username || I18nService.t('project_detail_unknown_user');
+            return member.role ? `${baseName} (${member.role})` : baseName;
+        }
+
+        function renderAssigneeOptions(selectedAssigneeIds = []) {
+            const host = document.getElementById('assigneeChecklist');
+            const selectedIdSet = new Set(
+                Array.isArray(selectedAssigneeIds)
+                    ? selectedAssigneeIds.filter(Boolean)
+                    : [selectedAssigneeIds].filter(Boolean)
+            );
+
+            if (!currentProjectMembers.length) {
+                host.innerHTML = `<div class="assignee-checklist-empty">${I18nService.t('issue_detail_select_member')}</div>`;
+                return;
+            }
+
+            host.innerHTML = currentProjectMembers.map((member) => `
+                <label class="assignee-option">
+                    <input
+                        type="checkbox"
+                        value="${member.user?.id || ''}"
+                        ${selectedIdSet.has(member.user?.id) ? 'checked' : ''}
+                    >
+                    <span>${getMemberDisplayLabel(member)}</span>
+                </label>
+            `).join('');
+        }
+
+        async function loadProjectMembers(projectId, selectedAssigneeIds = []) {
+            currentProjectMembers = [];
+            renderAssigneeOptions(selectedAssigneeIds);
+
+            if (!projectId) {
+                return;
+            }
+
+            try {
+                currentProjectMembers = await ProjectService.getMembers(projectId);
+            } catch (error) {
+                console.error('Error loading project members:', error);
+            }
+
+            renderAssigneeOptions(selectedAssigneeIds);
+        }
+
+        async function handleProjectChange() {
+            const projectId = document.getElementById('projectId').value;
+            await loadProjectMembers(projectId);
         }
 
         async function loadIssues() {
@@ -278,6 +338,7 @@
                             ${issue.description || (isEnglish ? 'No description yet for this issue.' : 'Chưa có mô tả cho công việc này.')}
                         </div>
                         ${project ? `<p class="text-muted">${isEnglish ? 'Project' : 'Dự án'}: <strong>${project.name}</strong></p>` : ''}
+                        <p class="text-muted">${I18nService.t('issue_detail_assignee')}: <strong>${issue.assigneeName || I18nService.t('issue_detail_no_assignee')}</strong></p>
                         <div class="issue-footer">
                             <small>${UIUtils.formatDate(issue.createdAt || new Date())}</small>
                             <div class="action-links">
@@ -313,9 +374,11 @@
         function openCreateModal() {
             document.getElementById('issueForm').reset();
             document.getElementById('issueId').value = '';
+            currentProjectMembers = [];
             setVoiceStatus('');
             stopSpeechRecognition();
             updateIssueOptions();
+            renderAssigneeOptions();
             UIUtils.showModal('issueModal');
         }
 
@@ -328,6 +391,7 @@
                 document.getElementById('description').value = issue.description || '';
                 document.getElementById('projectId').value = issue.projectId || '';
                 updateIssueOptions();
+                await loadProjectMembers(issue.projectId || '', issue.assigneeIds || (issue.assigneeId ? [issue.assigneeId] : []));
                 document.getElementById('priority').value = issue.priorityCode || 'MEDIUM';
                 document.getElementById('status').value = issue.statusCode || 'TODO';
                 document.getElementById('issueModalTitle').textContent = I18nService.getLanguage() === 'en' ? 'Edit issue' : 'Chỉnh sửa công việc';
@@ -341,10 +405,14 @@
             e.preventDefault();
             const isEnglish = I18nService.getLanguage() === 'en';
             const issueId = normalizeIssueId(document.getElementById('issueId').value);
+            const assigneeIds = Array.from(document.querySelectorAll('#assigneeChecklist input[type="checkbox"]:checked'))
+                .map((input) => input.value)
+                .filter(Boolean);
             const data = {
                 title: document.getElementById('title').value,
                 description: document.getElementById('description').value,
                 projectId: document.getElementById('projectId').value,
+                assigneeIds,
                 priority: document.getElementById('priority').value,
                 status: document.getElementById('status').value
             };
@@ -502,6 +570,10 @@
         document.addEventListener('app:languageChanged', async () => {
             updateIssueOptions();
             await loadProjects();
+            renderAssigneeOptions(
+                Array.from(document.querySelectorAll('#assigneeChecklist input[type="checkbox"]:checked'))
+                    .map((input) => input.value)
+            );
             renderIssues(allIssues);
         });
 
@@ -512,6 +584,7 @@
         });
 
         updateIssueOptions();
+        renderAssigneeOptions();
         loadCurrentUser();
         loadProjects();
         loadIssues();

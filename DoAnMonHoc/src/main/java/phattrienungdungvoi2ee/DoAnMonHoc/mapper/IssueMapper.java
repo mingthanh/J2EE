@@ -1,9 +1,11 @@
 package phattrienungdungvoi2ee.DoAnMonHoc.mapper;
 
+import java.util.List;
 import org.springframework.stereotype.Component;
 import phattrienungdungvoi2ee.DoAnMonHoc.dto.IssueRequest;
 import phattrienungdungvoi2ee.DoAnMonHoc.dto.IssueResponse;
 import phattrienungdungvoi2ee.DoAnMonHoc.entity.Issue;
+import phattrienungdungvoi2ee.DoAnMonHoc.entity.User;
 
 @Component
 public class IssueMapper {
@@ -53,14 +55,26 @@ public class IssueMapper {
 				? issue.getReporter().getDisplayName()
 				: issue.getReporter().getUsername());
 		}
-		if (issue.getAssignee() != null) {
-			response.setAssigneeId(issue.getAssignee().getId());
-			response.setAssigneeName(issue.getAssignee().getDisplayName() != null
-				? issue.getAssignee().getDisplayName()
-				: issue.getAssignee().getUsername());
+		if (issue.getAssignees() != null && !issue.getAssignees().isEmpty()) {
+			List<String> assigneeIds = issue.getAssignees().stream()
+				.map(User::getId)
+				.toList();
+			List<String> assigneeNames = issue.getAssignees().stream()
+				.map(this::getDisplayUserName)
+				.toList();
+			response.setAssigneeIds(assigneeIds);
+			response.setAssigneeNames(assigneeNames);
+			response.setAssigneeId(assigneeIds.get(0));
+			response.setAssigneeName(String.join(", ", assigneeNames));
 		}
 
 		return response;
+	}
+
+	private String getDisplayUserName(User user) {
+		return user.getDisplayName() != null && !user.getDisplayName().isBlank()
+			? user.getDisplayName()
+			: user.getUsername();
 	}
 
 	private String toDisplayStatus(String status) {

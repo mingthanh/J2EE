@@ -17,6 +17,7 @@ import phattrienungdungvoi2ee.DoAnMonHoc.exception.UserNotFoundException;
 import phattrienungdungvoi2ee.DoAnMonHoc.repository.ProjectMemberRepository;
 import phattrienungdungvoi2ee.DoAnMonHoc.repository.ProjectRepository;
 import phattrienungdungvoi2ee.DoAnMonHoc.repository.UserRepository;
+import phattrienungdungvoi2ee.DoAnMonHoc.service.NotificationService;
 import phattrienungdungvoi2ee.DoAnMonHoc.service.ProjectMemberService;
 
 @Service
@@ -25,15 +26,18 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
 	private final ProjectMemberRepository projectMemberRepository;
 	private final ProjectRepository projectRepository;
 	private final UserRepository userRepository;
+	private final NotificationService notificationService;
 
 	public ProjectMemberServiceImpl(
 		ProjectMemberRepository projectMemberRepository,
 		ProjectRepository projectRepository,
-		UserRepository userRepository
+		UserRepository userRepository,
+		NotificationService notificationService
 	) {
 		this.projectMemberRepository = projectMemberRepository;
 		this.projectRepository = projectRepository;
 		this.userRepository = userRepository;
+		this.notificationService = notificationService;
 	}
 
 	@Override
@@ -247,7 +251,9 @@ public class ProjectMemberServiceImpl implements ProjectMemberService {
 		member.setProject(project);
 		member.setUser(user);
 		member.setRole(role == null ? ProjectMemberRole.MEMBER : role);
-		return projectMemberRepository.save(member);
+		ProjectMember savedMember = projectMemberRepository.save(member);
+		notificationService.notifyProjectMemberAdded(savedMember);
+		return savedMember;
 	}
 
 	private ProjectMemberRole resolveRequestedRole(String rawRole) {

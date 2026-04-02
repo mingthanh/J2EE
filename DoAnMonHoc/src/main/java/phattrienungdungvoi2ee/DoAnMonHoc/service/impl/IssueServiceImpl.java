@@ -1,6 +1,8 @@
 package phattrienungdungvoi2ee.DoAnMonHoc.service.impl;
 
 import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -143,7 +145,7 @@ public class IssueServiceImpl implements IssueService {
 		}
 		User assignee = userRepository.findById(userId)
 			.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-		issue.setAssignee(assignee);
+		issue.setAssignees(new ArrayList<>(List.of(assignee)));
 		Issue savedIssue = issueRepository.save(issue);
 		notificationService.notifyAssignment(savedIssue);
 		return savedIssue;
@@ -196,14 +198,24 @@ public class IssueServiceImpl implements IssueService {
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reporter not found"));
 			issue.setReporter(reporter);
 		}
-		if (request.getAssigneeId() != null) {
+		if (request.getAssigneeIds() != null || request.getAssigneeId() != null) {
 			if (issue.getProject() == null) {
 				throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Project is required before assigning user");
 			}
-			projectMemberService.validateMember(issue.getProject().getId(), request.getAssigneeId());
-			User assignee = userRepository.findById(request.getAssigneeId())
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignee not found"));
-			issue.setAssignee(assignee);
+			List<String> requestedAssigneeIds = request.getAssigneeIds() != null
+				? request.getAssigneeIds()
+				: List.of(request.getAssigneeId());
+			LinkedHashSet<String> normalizedAssigneeIds = requestedAssigneeIds.stream()
+				.filter(id -> id != null && !id.isBlank())
+				.collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+			List<User> assignees = new ArrayList<>();
+			for (String assigneeId : normalizedAssigneeIds) {
+				projectMemberService.validateMember(issue.getProject().getId(), assigneeId);
+				User assignee = userRepository.findById(assigneeId)
+					.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Assignee not found"));
+				assignees.add(assignee);
+			}
+			issue.setAssignees(assignees);
 		}
 
 		StatusType targetStatus = resolveStatus(request);
@@ -275,7 +287,8 @@ public class IssueServiceImpl implements IssueService {
 
 		if (!isSuperAdmin() && targetStatus.getId() != null) {
 			String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
-			boolean isAssignee = issue.getAssignee() != null && currentUsername.equals(issue.getAssignee().getUsername());
+			boolean isAssignee = issue.getAssignees() != null
+				&& issue.getAssignees().stream().anyMatch(assignee -> currentUsername.equals(assignee.getUsername()));
 			boolean isChangingStatus = issue.getStatus() == null
 				|| !normalizeLookupName(issue.getStatus().getName()).equals(normalizeLookupName(targetStatus.getName()));
 			if (!isAssignee && isChangingStatus) {

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import phattrienungdungvoi2ee.DoAnMonHoc.entity.Issue;
+import phattrienungdungvoi2ee.DoAnMonHoc.entity.ProjectMember;
 import phattrienungdungvoi2ee.DoAnMonHoc.entity.User;
 import phattrienungdungvoi2ee.DoAnMonHoc.repository.UserRepository;
 import phattrienungdungvoi2ee.DoAnMonHoc.service.NotificationService;
@@ -50,28 +51,55 @@ public class NotificationServiceImpl implements NotificationService {
 
 	@Override
 	public void notifyAssignment(Issue issue) {
-		if (issue == null || issue.getAssignee() == null) {
+		if (issue == null || issue.getAssignees() == null || issue.getAssignees().isEmpty()) {
 			return;
 		}
 
-		SseEmitter emitter = emitters.get(issue.getAssignee().getId());
+		for (User assignee : issue.getAssignees()) {
+			SseEmitter emitter = emitters.get(assignee.getId());
+			if (emitter == null) {
+				continue;
+			}
+
+			try {
+				emitter.send(SseEmitter.event()
+					.name("issue-assigned")
+					.data(Map.of(
+						"type", "ISSUE_ASSIGNED",
+						"issueId", issue.getId(),
+						"issueKey", issue.getIssueKey(),
+						"summary", issue.getSummary(),
+						"projectId", issue.getProject() != null ? issue.getProject().getId() : null,
+						"projectName", issue.getProject() != null ? issue.getProject().getName() : null
+					)));
+			} catch (IOException ex) {
+				emitters.remove(assignee.getId());
+			}
+		}
+	}
+
+	@Override
+	public void notifyProjectMemberAdded(ProjectMember member) {
+		if (member == null || member.getUser() == null || member.getProject() == null) {
+			return;
+		}
+
+		SseEmitter emitter = emitters.get(member.getUser().getId());
 		if (emitter == null) {
 			return;
 		}
 
 		try {
 			emitter.send(SseEmitter.event()
-				.name("issue-assigned")
+				.name("project-member-added")
 				.data(Map.of(
-					"type", "ISSUE_ASSIGNED",
-					"issueId", issue.getId(),
-					"issueKey", issue.getIssueKey(),
-					"summary", issue.getSummary(),
-					"projectId", issue.getProject() != null ? issue.getProject().getId() : null,
-					"projectName", issue.getProject() != null ? issue.getProject().getName() : null
+					"type", "PROJECT_MEMBER_ADDED",
+					"projectId", member.getProject().getId(),
+					"projectName", member.getProject().getName(),
+					"role", member.getRole() != null ? member.getRole().name() : "MEMBER"
 				)));
 		} catch (IOException ex) {
-			emitters.remove(issue.getAssignee().getId());
+			emitters.remove(member.getUser().getId());
 		}
 	}
 }

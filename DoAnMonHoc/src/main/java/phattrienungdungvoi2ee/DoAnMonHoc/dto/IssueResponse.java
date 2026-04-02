@@ -1,6 +1,7 @@
 package phattrienungdungvoi2ee.DoAnMonHoc.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,6 +30,8 @@ public class IssueResponse {
 	private String reporterName;
 	private String assigneeId;
 	private String assigneeName;
+	private List<String> assigneeIds;
+	private List<String> assigneeNames;
 	private LocalDateTime createdAt;
 	private LocalDateTime dueAt;
 }

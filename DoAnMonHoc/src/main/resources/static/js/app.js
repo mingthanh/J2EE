@@ -167,6 +167,17 @@ const I18N_MESSAGES = {
     issues_filter_status: 'Tất cả trạng thái',
     issues_empty: 'Không có công việc',
     issues_empty_copy: 'Hãy tạo công việc đầu tiên để bắt đầu theo dõi tiến độ.',
+    issues_assignee_multi_hint: 'Giữ Ctrl hoặc Shift để chọn nhiều thành viên.',
+    issues_members_title: 'Thành viên dự án',
+    issues_members_copy: 'Thêm nhanh một hoặc nhiều thành viên rồi chọn người thực hiện ngay tại đây.',
+    issues_members_refresh: 'Làm mới DS',
+    issues_members_input_label: 'Thêm thành viên',
+    issues_members_input_placeholder: 'Nhập username hoặc email, mỗi người một dòng',
+    issues_members_input_hint: 'Có thể dán nhiều người bằng cách xuống dòng hoặc dùng dấu phẩy.',
+    issues_members_add_button: 'Thêm vào dự án',
+    issues_members_pick_label: 'Chọn nhanh thành viên',
+    issues_members_pick_hint: 'Bấm vào một thành viên để chọn làm người thực hiện.',
+    issues_members_project_required: 'Hãy chọn dự án trước khi thêm thành viên',
     issue_priority_high: 'Cao',
     issue_priority_medium: 'Trung bình',
     issue_priority_low: 'Thấp',
@@ -379,6 +390,17 @@ const I18N_MESSAGES = {
     issues_filter_status: 'All statuses',
     issues_empty: 'No issues',
     issues_empty_copy: 'Create your first issue to start tracking work.',
+    issues_assignee_multi_hint: 'Hold Ctrl or Shift to select multiple members.',
+    issues_members_title: 'Project members',
+    issues_members_copy: 'Add one or more members here, then assign the work without leaving this popup.',
+    issues_members_refresh: 'Refresh list',
+    issues_members_input_label: 'Add members',
+    issues_members_input_placeholder: 'Enter usernames or emails, one per line',
+    issues_members_input_hint: 'You can paste multiple people using new lines or commas.',
+    issues_members_add_button: 'Add to project',
+    issues_members_pick_label: 'Quick assign',
+    issues_members_pick_hint: 'Click a member below to set them as the assignee.',
+    issues_members_project_required: 'Please select a project before adding members',
     issue_priority_high: 'High',
     issue_priority_medium: 'Medium',
     issue_priority_low: 'Low',
@@ -815,7 +837,17 @@ class ApiService {
         return null;
       }
 
-      return await response.json();
+      const responseText = await response.text();
+      if (!responseText || !responseText.trim()) {
+        return null;
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        return JSON.parse(responseText);
+      }
+
+      return responseText;
     } catch (error) {
       console.error('API Error:', error);
       throw error;
@@ -1043,6 +1075,18 @@ class NotificationService {
       }
     });
 
+    this.emitter.addEventListener('project-member-added', (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        const message = I18nService.getLanguage() === 'en'
+          ? `You were added to project ${payload.projectName || ''} as ${payload.role || 'MEMBER'}`
+          : `Bạn đã được thêm vào dự án ${payload.projectName || ''} với vai trò ${payload.role || 'MEMBER'}`;
+        UIUtils.showAlert(message.trim(), 'success');
+      } catch (error) {
+        console.error('Notification parse error:', error);
+      }
+    });
+
     this.emitter.onerror = () => {
       if (this.emitter) {
         this.emitter.close();
@@ -1055,6 +1099,8 @@ class NotificationService {
 
 // ====================== UI UTILITIES ====================== 
 class UIUtils {
+  static toastTimers = new Map();
+
   static getDisplayName(user) {
     return user?.displayName || user?.username || 'U';
   }
@@ -1090,14 +1136,46 @@ class UIUtils {
   }
 
   static showAlert(message, type = 'info') {
+    if (!message) return;
+
+    const host = this.getToastHost();
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type}`;
-    alertDiv.textContent = message;
-    
-    const container = document.querySelector('.container') || document.body;
-    container.insertBefore(alertDiv, container.firstChild);
-    
-    setTimeout(() => alertDiv.remove(), 5000);
+    alertDiv.className = `alert alert-${type} toast-alert`;
+    alertDiv.setAttribute('role', 'status');
+    alertDiv.innerHTML = `
+      <div class="toast-alert-body">${message}</div>
+      <button type="button" class="toast-alert-close" aria-label="Close">×</button>
+    `;
+
+    const closeButton = alertDiv.querySelector('.toast-alert-close');
+    closeButton?.addEventListener('click', () => this.dismissToast(alertDiv));
+
+    host.appendChild(alertDiv);
+
+    const timer = window.setTimeout(() => this.dismissToast(alertDiv), 5000);
+    this.toastTimers.set(alertDiv, timer);
+  }
+
+  static getToastHost() {
+    let host = document.getElementById('app-toast-host');
+    if (!host) {
+      host = document.createElement('div');
+      host.id = 'app-toast-host';
+      host.className = 'toast-host';
+      document.body.appendChild(host);
+    }
+    return host;
+  }
+
+  static dismissToast(element) {
+    if (!element) return;
+    const timer = this.toastTimers.get(element);
+    if (timer) {
+      window.clearTimeout(timer);
+      this.toastTimers.delete(element);
+    }
+    element.classList.add('closing');
+    window.setTimeout(() => element.remove(), 180);
   }
 
   static showSuccess(message) {
