@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo - Jolliebee</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-title-key="reports_title">
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/dashboard" class="navbar-brand">Jolliebee</a>
+            <ul class="navbar-menu">
+                <li><a href="/dashboard" class="navbar-link" data-i18n="nav_dashboard">Dashboard</a></li>
+                <li><a href="/projects" class="navbar-link" data-i18n="nav_projects">Dự án</a></li>
+                <li><a href="/issues" class="navbar-link" data-i18n="nav_issues">Issues</a></li>
+                <li><a href="/profile" class="navbar-link" data-i18n="nav_profile">Hồ sơ</a></li>
+            </ul>
+            <div class="navbar-actions">
+                <div class="language-switcher" aria-label="Language switcher">
+                    <button type="button" class="lang-btn" data-lang-btn="vi">VI</button>
+                    <button type="button" class="lang-btn" data-lang-btn="en">EN</button>
+                </div>
+                <div class="navbar-user">
+                    <div class="user-menu">
+                        <button type="button" class="user-menu-trigger" aria-label="User menu">
+                            <div class="user-avatar" id="userAvatar">A</div>
+                        </button>
+                        <div class="user-dropdown">
+                            <div class="user-dropdown-header">
+                                <div class="user-dropdown-name" id="userDropdownName">Tên người dùng</div>
+                                <div class="user-dropdown-meta" id="userDropdownEmail">email@example.com</div>
+                            </div>
+                            <a href="/profile" class="user-dropdown-link" id="dropdownEditProfile">Chỉnh sửa hồ sơ</a>
+                            <a href="/profile#profileEditor" class="user-dropdown-link" id="dropdownUpdateAvatar">Cập nhật ảnh đại diện</a>
+                            <a href="#" class="user-dropdown-link" onclick="AuthService.logout(); return false;" data-i18n="common_logout">Đăng xuất</a>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline btn-small" onclick="AuthService.logout()" data-i18n="common_logout">Đăng xuất</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container page-shell">
+            <section class="page-hero">
+                <div class="hero-grid">
+                    <div>
+                        <div class="hero-badge" data-i18n="reports_badge">Báo cáo trực quan</div>
+                        <h1 class="hero-title" data-i18n="reports_hero_title">Theo dõi tiến độ dự án với góc nhìn giống một bảng điều hành Jira thu gọn.</h1>
+                        <p class="hero-copy" data-i18n="reports_hero_copy">Trang này tổng hợp khối lượng công việc, mức ưu tiên, trạng thái và tiến độ dự án để bạn nhận ra điểm nghẽn nhanh hơn.</p>
+                        <div class="hero-actions">
+                            <a href="/dashboard" class="btn btn-outline" data-i18n="dashboard_overview_nav">Tổng quan dashboard</a>
+                            <button class="btn btn-secondary" onclick="loadReports()" data-i18n="reports_refresh">Làm mới báo cáo</button>
+                        </div>
+                    </div>
+                    <div class="visual-cluster report-cluster">
+                        <div class="visual-panel primary report-highlight">
+                            <span class="panel-chip" data-i18n="reports_summary_title">Tóm tắt điều hành</span>
+                            <strong id="heroReportMetric">0%</strong>
+                            <p id="heroReportCopy">0 / 0</p>
+                        </div>
+                        <div class="visual-panel secondary report-mini-panel">
+                            <span class="panel-chip" data-i18n="reports_status_title">Phân bổ theo trạng thái</span>
+                            <div class="mini-report-stat">
+                                <span id="heroInProgressLabel">Đang làm</span>
+                                <strong id="heroInProgress">0</strong>
+                            </div>
+                        </div>
+                        <div class="visual-panel tertiary report-mini-panel">
+                            <span class="panel-chip" data-i18n="reports_priority_title">Ưu tiên công việc</span>
+                            <div class="mini-report-stat">
+                                <span id="heroHighPriorityLabel">Ưu tiên cao</span>
+                                <strong id="heroHighPriority">0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-layout">
+                <aside class="sidebar page-panel">
+                    <h3 class="sidebar-title" data-i18n="dashboard_quick_nav">Điều hướng nhanh</h3>
+                    <ul class="sidebar-menu">
+                        <li><a href="/dashboard" class="sidebar-link" data-i18n="dashboard_overview_nav">Tổng quan dashboard</a></li>
+                        <li><a href="/reports" class="sidebar-link active" data-i18n="dashboard_reports_nav">Báo cáo</a></li>
+                        <li><a href="/projects" class="sidebar-link" data-i18n="dashboard_projects_nav">Quản lý dự án</a></li>
+                        <li><a href="/issues" class="sidebar-link" data-i18n="dashboard_issues_nav">Theo dõi công việc</a></li>
+                        <li><a href="/profile" class="sidebar-link" data-i18n="dashboard_profile_nav">Thông tin cá nhân</a></li>
+                        <li><a href="#" class="sidebar-link" onclick="AuthService.logout(); return false;" data-i18n="common_logout">Đăng xuất</a></li>
+                    </ul>
+                </aside>
+
+                <div class="page-shell report-shell">
+                    <section class="stats-grid">
+                        <article class="stat-card">
+                            <span class="stat-label" data-i18n="reports_metric_completion_rate">Tỷ lệ hoàn thành</span>
+                            <div class="stat-value" id="completionRateValue">0%</div>
+                        </article>
+                        <article class="stat-card">
+                            <span class="stat-label" data-i18n="reports_metric_active_projects">Dự án hoạt động</span>
+                            <div class="stat-value" id="activeProjectsValue">0</div>
+                        </article>
+                        <article class="stat-card">
+                            <span class="stat-label" data-i18n="reports_metric_unassigned">Issue chưa giao</span>
+                            <div class="stat-value" id="unassignedIssuesValue">0</div>
+                        </article>
+                        <article class="stat-card">
+                            <span class="stat-label" data-i18n="reports_metric_overdue">Issue quá hạn</span>
+                            <div class="stat-value" id="overdueIssuesValue">0</div>
+                        </article>
+                    </section>
+
+                    <section class="report-grid">
+                        <article class="page-panel report-card">
+                            <div class="section-header">
+                                <div>
+                                    <h2 class="section-title" data-i18n="reports_status_title">Phân bổ theo trạng thái</h2>
+                                    <p class="section-subtitle" data-i18n="reports_status_copy">Xem ngay số lượng issue ở từng giai đoạn để biết luồng công việc đang tắc ở đâu.</p>
+                                </div>
+                            </div>
+                            <div class="donut-chart-shell">
+                                <div class="donut-chart" id="statusDonutChart" aria-label="Status chart"></div>
+                                <div class="chart-legend" id="statusLegend"></div>
+                            </div>
+                        </article>
+
+                        <article class="page-panel report-card">
+                            <div class="section-header">
+                                <div>
+                                    <h2 class="section-title" data-i18n="reports_priority_title">Ưu tiên công việc</h2>
+                                    <p class="section-subtitle" data-i18n="reports_priority_copy">Biểu đồ thanh cho biết nhóm đang dồn lực vào các việc quan trọng đến mức nào.</p>
+                                </div>
+                            </div>
+                            <div class="bars-list" id="priorityBars"></div>
+                        </article>
+                    </section>
+
+                    <section class="page-panel report-card">
+                        <div class="section-header">
+                            <div>
+                                <h2 class="section-title" data-i18n="reports_health_title">Tình trạng vận hành</h2>
+                                <p class="section-subtitle" data-i18n="reports_health_copy">Một vài tỷ lệ quan trọng giúp đọc sức khỏe backlog nhanh hơn.</p>
+                            </div>
+                        </div>
+                        <div class="health-grid" id="healthMetrics"></div>
+                    </section>
+
+                    <section class="page-panel report-card">
+                        <div class="section-header">
+                            <div>
+                                <h2 class="section-title" data-i18n="reports_workload_title">Khối lượng theo dự án</h2>
+                                <p class="section-subtitle" data-i18n="reports_workload_copy">So sánh tổng issue, đang làm và hoàn thành của từng dự án trong cùng một nơi.</p>
+                            </div>
+                        </div>
+                        <div class="table-shell report-table-shell">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="reports_table_project">Dự án</th>
+                                        <th data-i18n="reports_table_total">Tổng issue</th>
+                                        <th data-i18n="reports_table_in_progress">Đang làm</th>
+                                        <th data-i18n="reports_table_done">Hoàn thành</th>
+                                        <th data-i18n="reports_table_completion">Tỷ lệ hoàn thành</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="workloadTableBody">
+                                    <tr>
+                                        <td colspan="5">
+                                            <div class="empty-state compact">
+                                                <p>Đang tải dữ liệu báo cáo...</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        const REPORT_COLORS = ['#6a5cff', '#ff8a3d', '#1fa971', '#de4b74', '#4a7dff', '#9a6bff'];
+
+        document.querySelectorAll('[data-lang-btn]').forEach((button) => {
+            button.addEventListener('click', () => {
+                I18nService.setLanguage(button.dataset.langBtn);
+                updateNavbarDropdownTexts();
+                loadReports();
+            });
+        });
+
+        function updateNavbarDropdownTexts() {
+            const isEnglish = I18nService.getLanguage() === 'en';
+            document.getElementById('dropdownEditProfile').textContent = isEnglish ? 'Edit profile' : 'Chỉnh sửa hồ sơ';
+            document.getElementById('dropdownUpdateAvatar').textContent = isEnglish ? 'Update avatar' : 'Cập nhật ảnh đại diện';
+        }
+
+        function normalizeStatus(issue) {
+            const raw = (issue?.statusCode || issue?.status || '').toString().toLowerCase();
+            if (raw.includes('done') || raw.includes('resolve') || raw.includes('closed') || raw.includes('complete')) return 'done';
+            if (raw.includes('review')) return 'review';
+            if (raw.includes('progress') || raw.includes('doing') || raw.includes('develop')) return 'in_progress';
+            return 'open';
+        }
+
+        function normalizePriority(issue) {
+            const raw = (issue?.priorityCode || issue?.priority || '').toString().toLowerCase();
+            if (raw.includes('highest') || raw.includes('critical') || raw.includes('urgent')) return 'critical';
+            if (raw.includes('high')) return 'high';
+            if (raw.includes('low')) return 'low';
+            return 'medium';
+        }
+
+        function getStatusLabel(key) {
+            const isEnglish = I18nService.getLanguage() === 'en';
+            const labels = {
+                open: isEnglish ? 'Open' : 'Mở',
+                in_progress: isEnglish ? 'In Progress' : 'Đang làm',
+                review: isEnglish ? 'Review' : 'Chờ duyệt',
+                done: isEnglish ? 'Done' : 'Hoàn thành',
+            };
+            return labels[key] || key;
+        }
+
+        function getPriorityLabel(key) {
+            const isEnglish = I18nService.getLanguage() === 'en';
+            const labels = {
+                critical: isEnglish ? 'Critical' : 'Khẩn cấp',
+                high: isEnglish ? 'High' : 'Cao',
+                medium: isEnglish ? 'Medium' : 'Trung bình',
+                low: isEnglish ? 'Low' : 'Thấp',
+            };
+            return labels[key] || key;
+        }
+
+        function createDonutChart(items) {
+            const total = items.reduce((sum, item) => sum + item.value, 0);
+            if (!total) {
+                return '<div class="empty-state compact"><p>' + I18nService.t('reports_no_data_copy') + '</p></div>';
+            }
+
+            let cumulative = 0;
+            const segments = items.map((item) => {
+                const fraction = item.value / total;
+                const percent = (fraction * 100).toFixed(2);
+                const dash = `${percent} ${100 - percent}`;
+                const rotation = cumulative * 360 - 90;
+                cumulative += fraction;
+                return `
+                    <circle class="donut-segment" cx="60" cy="60" r="42"
+                        stroke="${item.color}" stroke-dasharray="${dash}"
+                        transform="rotate(${rotation} 60 60)"></circle>
+                `;
+            }).join('');
+
+            return `
+                <svg viewBox="0 0 120 120" class="donut-svg" role="img" aria-hidden="true">
+                    <circle cx="60" cy="60" r="42" class="donut-track"></circle>
+                    ${segments}
+                </svg>
+                <div class="donut-center">
+                    <strong>${total}</strong>
+                    <span>${I18nService.t('dashboard_total_issues')}</span>
+                </div>
+            `;
+        }
+
+        function renderLegend(targetId, items) {
+            const target = document.getElementById(targetId);
+            target.innerHTML = items.map((item) => `
+                <div class="legend-item">
+                    <span class="legend-dot" style="background:${item.color}"></span>
+                    <div>
+                        <strong>${item.label}</strong>
+                        <p>${item.value}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderPriorityBars(items) {
+            const target = document.getElementById('priorityBars');
+            const max = Math.max(...items.map((item) => item.value), 0);
+
+            target.innerHTML = items.map((item) => {
+                const width = max ? (item.value / max) * 100 : 0;
+                return `
+                    <div class="bar-row">
+                        <div class="bar-row-head">
+                            <strong>${item.label}</strong>
+                            <span>${item.value}</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width:${width}%; background:${item.color};"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderHealthMetrics(metrics) {
+            const target = document.getElementById('healthMetrics');
+            target.innerHTML = metrics.map((metric) => `
+                <article class="health-card">
+                    <span>${metric.label}</span>
+                    <strong>${metric.value}</strong>
+                    <p>${metric.copy}</p>
+                </article>
+            `).join('');
+        }
+
+        function renderWorkloadTable(rows) {
+            const target = document.getElementById('workloadTableBody');
+            if (!rows.length) {
+                target.innerHTML = `
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state compact">
+                                <h3>${I18nService.t('reports_no_data')}</h3>
+                                <p>${I18nService.t('reports_no_data_copy')}</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            target.innerHTML = rows.map((row) => `
+                <tr>
+                    <td>${row.name}</td>
+                    <td>${row.total}</td>
+                    <td>${row.inProgress}</td>
+                    <td>${row.done}</td>
+                    <td>
+                        <div class="completion-cell">
+                            <div class="mini-progress">
+                                <div class="mini-progress-fill" style="width:${row.completion}%"></div>
+                            </div>
+                            <span>${row.completion}%</span>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadReports() {
+            try {
+                const [user, projects, issues] = await Promise.all([
+                    AuthService.ensureCurrentUser(),
+                    ProjectService.getAll(),
+                    IssueService.getAll(),
+                ]);
+
+                if (user) {
+                    const name = user.displayName || user.username;
+                    UIUtils.renderAvatar(document.getElementById('userAvatar'), user);
+                    document.getElementById('userDropdownName').textContent = name;
+                    document.getElementById('userDropdownEmail').textContent = user.email || '-';
+                }
+                updateNavbarDropdownTexts();
+                document.getElementById('heroInProgressLabel').textContent = getStatusLabel('in_progress');
+                document.getElementById('heroHighPriorityLabel').textContent = I18nService.getLanguage() === 'en' ? 'High priority' : 'Ưu tiên cao';
+
+                const activeProjects = (projects || []).filter((project) => project.active !== false);
+                const doneIssues = (issues || []).filter((issue) => normalizeStatus(issue) === 'done');
+                const inProgressIssues = (issues || []).filter((issue) => normalizeStatus(issue) === 'in_progress');
+                const unassignedIssues = (issues || []).filter((issue) => !(issue.assigneeId || (issue.assigneeIds || []).length));
+                const overdueIssues = (issues || []).filter((issue) => issue.dueAt && new Date(issue.dueAt) < new Date() && normalizeStatus(issue) !== 'done');
+                const completionRate = issues.length ? Math.round((doneIssues.length / issues.length) * 100) : 0;
+
+                document.getElementById('completionRateValue').textContent = `${completionRate}%`;
+                document.getElementById('activeProjectsValue').textContent = activeProjects.length;
+                document.getElementById('unassignedIssuesValue').textContent = unassignedIssues.length;
+                document.getElementById('overdueIssuesValue').textContent = overdueIssues.length;
+
+                document.getElementById('heroReportMetric').textContent = `${completionRate}%`;
+                document.getElementById('heroReportCopy').textContent = `${doneIssues.length} / ${issues.length} ${I18nService.getLanguage() === 'en' ? 'issues completed' : 'issue đã hoàn thành'}`;
+                document.getElementById('heroInProgress').textContent = inProgressIssues.length;
+
+                const prioritySummary = ['critical', 'high', 'medium', 'low'].map((key, index) => ({
+                    key,
+                    label: getPriorityLabel(key),
+                    value: issues.filter((issue) => normalizePriority(issue) === key).length,
+                    color: REPORT_COLORS[index + 1],
+                }));
+
+                const highPriorityCount = prioritySummary
+                    .filter((item) => item.key === 'critical' || item.key === 'high')
+                    .reduce((sum, item) => sum + item.value, 0);
+                document.getElementById('heroHighPriority').textContent = highPriorityCount;
+
+                const statusSummary = ['open', 'in_progress', 'review', 'done'].map((key, index) => ({
+                    key,
+                    label: getStatusLabel(key),
+                    value: issues.filter((issue) => normalizeStatus(issue) === key).length,
+                    color: REPORT_COLORS[index],
+                }));
+
+                document.getElementById('statusDonutChart').innerHTML = createDonutChart(statusSummary);
+                renderLegend('statusLegend', statusSummary);
+                renderPriorityBars(prioritySummary);
+
+                const overdueRate = issues.length ? Math.round((overdueIssues.length / issues.length) * 100) : 0;
+                const assignmentRate = issues.length ? 100 - Math.round((unassignedIssues.length / issues.length) * 100) : 0;
+                const flowRate = issues.length ? Math.round(((doneIssues.length + inProgressIssues.length) / issues.length) * 100) : 0;
+
+                renderHealthMetrics([
+                    {
+                        label: I18nService.getLanguage() === 'en' ? 'Execution rate' : 'Tỷ lệ đang thực thi',
+                        value: `${flowRate}%`,
+                        copy: I18nService.getLanguage() === 'en' ? 'Items already in motion or completed.' : 'Các đầu việc đã được kéo vào guồng xử lý hoặc hoàn tất.',
+                    },
+                    {
+                        label: I18nService.getLanguage() === 'en' ? 'Assignment coverage' : 'Độ phủ phân công',
+                        value: `${assignmentRate}%`,
+                        copy: I18nService.getLanguage() === 'en' ? 'How much of the backlog has an owner.' : 'Bao nhiêu phần trăm backlog đã có người chịu trách nhiệm.',
+                    },
+                    {
+                        label: I18nService.getLanguage() === 'en' ? 'Overdue pressure' : 'Áp lực quá hạn',
+                        value: `${overdueRate}%`,
+                        copy: I18nService.getLanguage() === 'en' ? 'Share of tasks that passed their due date.' : 'Tỷ trọng công việc đã vượt qua hạn xử lý.',
+                    },
+                ]);
+
+                const workloadRows = (projects || []).map((project) => {
+                    const projectIssues = issues.filter((issue) => issue.projectId === project.id);
+                    const total = projectIssues.length;
+                    const inProgress = projectIssues.filter((issue) => normalizeStatus(issue) === 'in_progress').length;
+                    const done = projectIssues.filter((issue) => normalizeStatus(issue) === 'done').length;
+                    const completion = total ? Math.round((done / total) * 100) : 0;
+                    return {
+                        name: project.name,
+                        total,
+                        inProgress,
+                        done,
+                        completion,
+                    };
+                }).sort((a, b) => b.total - a.total);
+
+                renderWorkloadTable(workloadRows);
+            } catch (error) {
+                console.error('Error loading reports:', error);
+                UIUtils.showError(I18nService.getLanguage() === 'en' ? 'Unable to load reports' : 'Không thể tải báo cáo');
+            }
+        }
+
+        loadReports();
+    </script>
+</body>
+</html>

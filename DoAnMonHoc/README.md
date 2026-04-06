@@ -108,7 +108,6 @@ Trong do:
 
 ## Luu y
 
-- He thong dung `spring.jpa.hibernate.ddl-auto=update`, phu hop de demo va phat trien, khong nen giu nguyen khi deploy production.
 - Realtime notification dang dung SSE.
 - Neu `mvnw.cmd` loi tren may ban, co the cai Maven rieng va chay bang lenh `mvn spring-boot:run`.
 

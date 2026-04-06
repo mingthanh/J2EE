@@ -60,4 +60,9 @@ public class WebController {
     public String profile() {
         return "profile";
     }
+
+    @GetMapping("/reports")
+    public String reports() {
+        return "reports";
+    }
 }
